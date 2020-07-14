@@ -1,0 +1,17 @@
+@import "./colors.scss";
+@import "node_modules/bootstrap/scss/bootstrap";
+
+.content {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  height: calc(100vh - 56px);
+}
+
+.auto-overflow {
+  overflow: auto;
+}
+
+.wrapper {
+  height: calc(100% - 56px);
+  padding-top: 56px;
+}

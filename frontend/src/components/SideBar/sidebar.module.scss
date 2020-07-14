@@ -1,0 +1,33 @@
+.sidebar {
+  height: calc(100vh - 56px);
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border-right: 1px solid #dee2e6 !important;
+  color: #495057;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #dee2e6 !important;
+  }
+}
+
+.repositoryIcon {
+  margin-right: 10px;
+  display: inline-block;
+  color: #606972;
+}
+
+
+.icon {
+  margin-right: 10px;
+  display: inline-block;
+}
+
+.repositoryTitle {
+  margin-top: 4px;
+  font-size: 14px !important;
+  font-weight: 700;
+}

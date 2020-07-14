@@ -27,8 +27,8 @@ namespace RemoteGitDeploy.Manager {
 
         #region Session
 
-        public async Task CreateSessionAsync(string token, long userId) {
-            await _database.StringSetAsync("session." + token, userId.ToString(), TimeSpan.FromHours(24));
+        public async Task CreateSessionAsync(string token, long userId, TimeSpan expiry) {
+            await _database.StringSetAsync("session." + token, userId.ToString(), expiry);
         }
 
         public async Task<bool> IsValidSessionAsync(string token) {

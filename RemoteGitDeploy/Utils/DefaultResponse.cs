@@ -8,22 +8,22 @@ namespace RemoteGitDeploy.Utils {
     public static class DefaultResponse {
 
         public static async Task InternalError(HttpContext httpContext) {
-            httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            httpContext.Response.StatusCode = StatusCodes.Status200OK;
             await httpContext.Response.WriteAsync("{\"success\":false,\"message\":\"Internal server error.\"}");
         }
 
         public static async Task InvalidContentType(HttpContext httpContext, string expectedContentType) {
-            httpContext.Response.StatusCode = StatusCodes.Status415UnsupportedMediaType;
+            httpContext.Response.StatusCode = StatusCodes.Status200OK;
             await httpContext.Response.WriteAsync($"{{\"success\":false,\"message\":\"Invalid content type, expected '{expectedContentType}'.\"}}");
         }
 
         public static async Task UnknownApi(HttpContext httpContext, string apiPath) {
-            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            httpContext.Response.StatusCode = StatusCodes.Status200OK;
             await httpContext.Response.WriteAsync($"{{\"success\":false,\"message\":\"Unknown API '{apiPath}'.\"}}");
         }
 
         public static async Task InvalidSession(HttpContext httpContext) {
-            httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+            httpContext.Response.StatusCode = StatusCodes.Status200OK;
             await httpContext.Response.WriteAsync("{\"success\":false,\"invalidSession\":true,\"message\":\"Invalid or non-existent session.\"}");
         }
 
@@ -37,24 +37,25 @@ namespace RemoteGitDeploy.Utils {
             await httpContext.Response.WriteAsync("{\"success\":false,\"message\":\"The request size is too large. Maximum of 1000000 bytes / 1 MB\"}");
         }
 
-        public static async Task InvalidField(HttpContext httpContext, string field) {
-            httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await httpContext.Response.WriteAsync($"{{\"success\":false,\"message\":\"Invalid '{field}' field.\",\"field\":\"{field}\"}}");
+        public static async Task InvalidField(HttpContext httpContext, string field, string error = null) {
+            httpContext.Response.StatusCode = StatusCodes.Status200OK;
+            if(error == null)  await httpContext.Response.WriteAsync($"{{\"success\":false,\"message\":\"Invalid '{field}' field.\",\"field\":\"{field}\"}}");
+            else await httpContext.Response.WriteAsync($"{{\"success\":false,\"message\":\"{error}\",\"field\":\"{field}\"}}");
         }
 
-        /*
+        public static async Task Success(HttpContext httpContext) {
+            httpContext.Response.StatusCode = StatusCodes.Status200OK;
+            await httpContext.Response.WriteAsync("{\"success\":true}");
+        }
+
+        public static async Task Failed(HttpContext httpContext) {
+            httpContext.Response.StatusCode = StatusCodes.Status200OK;
+            await httpContext.Response.WriteAsync("{\"success\":false}");
+        }
 
         public static async Task FailedParsingData(HttpContext httpContext) {
             httpContext.Response.StatusCode = StatusCodes.Status200OK;
             await httpContext.Response.WriteAsync("{\"success\":false,\"message\":\"errors.failedParsingData\"}");
         }
-
-        public static async Task SuccessUpdate(HttpContext httpContext) {
-            httpContext.Response.StatusCode = StatusCodes.Status200OK;
-            await httpContext.Response.WriteAsync("{\"success\":true}");
-        }
-
-        public static async Task FailedUpdate(HttpContext httpContext) => await InternalError(httpContext);
-        */
     }
 }

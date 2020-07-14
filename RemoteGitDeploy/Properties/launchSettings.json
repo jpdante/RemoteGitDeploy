@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "RemoteGitDeploy": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Users\\jpdante\\Documents\\GitHub\\HtcSharp\\HtcSharp.Server\\bin\\x64\\Debug\\HtcSharp.Server.exe",
+      "workingDirectory": "C:\\Users\\jpdante\\Documents\\GitHub\\HtcSharp\\HtcSharp.Server\\bin\\x64\\Debug\\",
+      "environmentVariables": {
+        "DevMode": "true"
+      },
+      "nativeDebugging": true
+    }
+  }
+}

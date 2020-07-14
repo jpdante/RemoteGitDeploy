@@ -46,7 +46,7 @@ end
 print("[LuaBuildEvents] Running in " .. args[2] .. " Mode\n")
 
 -- Create base directory
-pluginsPath = Path.combine(DirectoryInfo.New(args[3]).parent.fullName, [[HtcSharp/HtcSharp.Server/bin/]] .. args[6] .. "/" .. args[2] .. [[/plugins/rednxvideo]])
+pluginsPath = Path.combine(DirectoryInfo.New(args[3]).parent.fullName, [[HtcSharp/HtcSharp.Server/bin/]] .. args[6] .. "/" .. args[2] .. [[/plugins/RemoteGitDeploy]])
 if Directory.exists(pluginsPath) == false then
   Directory.createDirectory(pluginsPath)
 end

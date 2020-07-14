@@ -10,7 +10,6 @@ using HtcSharp.Core.Utils;
 using HtcSharp.HttpModule;
 using HtcSharp.HttpModule.Http.Abstractions;
 using HtcSharp.HttpModule.Routing;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RemoteGitDeploy.API;
 using RemoteGitDeploy.Manager;
@@ -29,11 +28,12 @@ namespace RemoteGitDeploy {
         internal static ILogger Logger;
         internal static List<IAPI> ApiPages;
         internal static string Domain { get; private set; }
+        internal static string DevKey { get; private set; }
 
         public Task Load(PluginServerContext pluginServerContext, ILogger logger) {
             PluginServerContext = pluginServerContext;
             Logger = logger;
-            string path = Path.Combine(PluginServerContext.PluginsPath, "RedNXVideo.conf");
+            string path = Path.Combine(PluginServerContext.PluginsPath, "RemoteGitDeploy.json");
             if (!File.Exists(path)) {
                 using var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
                 using var streamWriter = new StreamWriter(fileStream);
@@ -41,11 +41,13 @@ namespace RemoteGitDeploy {
                     Domain = "some-domain.com",
                     CacheString = "localhost",
                     DatabaseString = "Server=127.0.0.1;Port=3306;Database=remotegitdeploy;Uid=root;Pwd=root;",
+                    DevKey = SessionGenerator.Create(),
                 }, true));
             }
             var config = JsonUtils.GetJsonFile(path);
 
             Domain = config.GetValue("Domain", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
+            DevKey = config.GetValue("DevKey", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
 
             var cacheString = config.GetValue("CacheString", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
             CacheManager = new CacheManager(cacheString);
@@ -56,7 +58,8 @@ namespace RemoteGitDeploy {
             return Task.CompletedTask;
         }
 
-        public Task Enable() {
+        public async Task Enable() {
+            await CacheManager.ConnectAsync();
             ApiPages = new List<IAPI>();
             var interfaceType = typeof(IAPI);
             IEnumerable<Type> types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(s => s.GetTypes()).Where(p => interfaceType.IsAssignableFrom(p));
@@ -66,15 +69,14 @@ namespace RemoteGitDeploy {
                 ApiPages.Add(page);
                 UrlMapper.RegisterPluginPage(page.FileName, this);
             }
-            return Task.CompletedTask;
         }
 
-        public Task Disable() {
+        public async Task Disable() {
             foreach (var page in ApiPages) {
                 UrlMapper.UnRegisterPluginPage(page.FileName);
             }
             ApiPages.Clear();
-            return Task.CompletedTask;
+            await CacheManager.DisconnectAsync();
         }
 
         public bool IsCompatible(int htcMajor, int htcMinor, int htcPatch) {
@@ -87,11 +89,15 @@ namespace RemoteGitDeploy {
                     await DefaultResponse.InternalError(httpContext);
                     return;
                 }
+                if (!httpContext.Request.Host.ToString().Equals(Domain)) return;
                 foreach (var page in ApiPages.Where(page => filename.Equals(page.FileName))) {
+                    Logger.LogDebug($"{httpContext.Request.Method} {filename}");
                     if (!httpContext.Request.Method.Equals(page.RequestMethod, StringComparison.CurrentCultureIgnoreCase)) continue;
-                    if (!httpContext.Request.ContentType.Equals(page.RequestContentType, StringComparison.CurrentCultureIgnoreCase)) {
-                        await DefaultResponse.InvalidContentType(httpContext, httpContext.Request.ContentType);
-                        return;
+                    if (page.RequestContentType != null) {
+                        if (httpContext.Request.ContentType == null || !httpContext.Request.ContentType.Split(";", 2)[0].Equals(page.RequestContentType, StringComparison.CurrentCultureIgnoreCase)) {
+                            await DefaultResponse.InvalidContentType(httpContext, httpContext.Request.ContentType);
+                            return;
+                        }
                     }
                     if (page.NeedAuthentication) {
                         httpContext.Session = new Session(httpContext);
