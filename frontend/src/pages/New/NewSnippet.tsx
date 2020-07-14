@@ -10,6 +10,7 @@ interface IProps {}
 interface IFile {
   filename: string;
   code: string;
+  language: string;
 }
 
 interface IState {
@@ -30,6 +31,7 @@ class NewSnippet extends React.Component<IProps, IState> {
         {
           filename: "",
           code: "",
+          language: "",
         },
       ],
     };
@@ -91,6 +93,7 @@ class NewSnippet extends React.Component<IProps, IState> {
     files.push({
       filename: "",
       code: "",
+      language: "",
     });
     this.setState({
       files: files,
@@ -108,10 +111,66 @@ class NewSnippet extends React.Component<IProps, IState> {
   handleFilenameChange = async (id: number, filename: string) => {
     var { files } = this.state;
     files[id].filename = filename;
+    files[id].language = this.getLanguage(filename);
     this.setState({
       files: files,
     });
   };
+
+  getLanguage(filename: string) {
+    const filenameArray = filename.split(".");
+    const extension = filenameArray[filenameArray.length - 1];
+    switch (extension) {
+      case "cs":
+        return "csharp";
+      case "css":
+        return "css";
+      case "md":
+        return "markdown";
+      case "cpp":
+        return "c++";
+      case "c":
+        return "c";
+      case "html":
+        return "html";
+      case "htm":
+        return "html";
+      case "js":
+        return "javascript";
+      case "xml":
+        return "xml";
+      case "sh":
+        return "bash";
+      case "go":
+        return "go";
+      case "rb":
+        return "ruby";
+      case "java":
+        return "java";
+      case "json":
+        return "json";
+      case "lua":
+        return "lua";
+      case "perl":
+        return "perl";
+      case "php":
+        return "php";
+      case "python":
+        return "python";
+      case "scss":
+        return "scss";
+      case "sql":
+        return "sql";
+      case "yml":
+        return "yaml";
+      case "ts":
+        return "typescript";
+      case "tsx":
+        return "typescript";
+      default:
+        return "text";
+    }
+  }
 
   render() {
     return (
@@ -136,8 +195,9 @@ class NewSnippet extends React.Component<IProps, IState> {
                 <CodeEditor
                   key={index}
                   id={index}
-                  code={file.code}
                   filename={file.filename}
+                  code={file.code}
+                  language={file.language}
                   isSingle={this.state.files.length < 2}
                   updateCodeFunc={this.handleCodeChange}
                   updateFilenameFunc={this.handleFilenameChange}

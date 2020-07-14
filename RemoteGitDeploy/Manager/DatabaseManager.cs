@@ -39,6 +39,32 @@ namespace RemoteGitDeploy.Manager {
 
         #region Account
 
+        public async Task<bool> NewAccountAsync(string firstName, string lastName, string email, string username, string password, string salt, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("INSERT INTO accounts (id, first_name, last_name, email, username, password, salt) VALUES (@id, @firstName, @lastName, @email, @username, @password, @salt);", conn);
+            cmd.Parameters.AddWithValue("id", StaticData.IdGenerator.CreateId());
+            cmd.Parameters.AddWithValue("firstName", firstName);
+            cmd.Parameters.AddWithValue("lastName", lastName);
+            cmd.Parameters.AddWithValue("email", email);
+            cmd.Parameters.AddWithValue("username", username);
+            cmd.Parameters.AddWithValue("password", password);
+            cmd.Parameters.AddWithValue("salt", salt);
+            return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
+        public async Task<bool> HasUsernameAsync(string username, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("SELECT username FROM accounts WHERE username = @username;", conn);
+            cmd.Parameters.AddWithValue("username", username);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            return reader.HasRows;
+        }
+
+        public async Task<bool> HasEmailAsync(string email, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("SELECT email FROM accounts WHERE email = @email;", conn);
+            cmd.Parameters.AddWithValue("email", email);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            return reader.HasRows;
+        }
+
         public async Task<Account> GetAccountAsync(string email, MySqlConnection conn) {
             await using var cmd = new MySqlCommand("SELECT id, password, salt, username FROM accounts WHERE accounts.email = @email;", conn);
             cmd.Parameters.AddWithValue("email", email);
@@ -68,7 +94,6 @@ namespace RemoteGitDeploy.Manager {
             await using var reader = await cmd.ExecuteReaderAsync();
             return reader.HasRows;
         }
-
 
         public async Task<Team[]> GetTeamsAsync(MySqlConnection conn) {
             var teams = new List<Team>();
@@ -127,12 +152,13 @@ namespace RemoteGitDeploy.Manager {
             return -1;
         }*/
 
-        public async Task<bool> NewSnippetFileAsync(long snippet, string filename, string code, MySqlConnection conn, MySqlTransaction transaction = null) {
-            await using var cmd = new MySqlCommand("INSERT INTO snippet_files (id, snippet, filename, code) VALUES (@id, @snippet, @filename, @code);", conn, transaction);
+        public async Task<bool> NewSnippetFileAsync(long snippet, string filename, string code, string language, MySqlConnection conn, MySqlTransaction transaction = null) {
+            await using var cmd = new MySqlCommand("INSERT INTO snippet_files (id, snippet, filename, code, language) VALUES (@id, @snippet, @filename, @code, @language);", conn, transaction);
             cmd.Parameters.AddWithValue("id", StaticData.IdGenerator.CreateId());
             cmd.Parameters.AddWithValue("snippet", snippet);
             cmd.Parameters.AddWithValue("filename", filename);
             cmd.Parameters.AddWithValue("code", code);
+            cmd.Parameters.AddWithValue("language", language);
             return await cmd.ExecuteNonQueryAsync() > 0;
         }
 
@@ -145,6 +171,17 @@ namespace RemoteGitDeploy.Manager {
                 snippets.Add(new Snippet(reader));
             }
             return snippets.ToArray();
+        }
+
+        public async Task<Snippet> GetSnippetAsync(string guid, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("SELECT id, guid, account, description FROM snippets WHERE guid = @guid;", conn);
+            cmd.Parameters.AddWithValue("guid", guid);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return null;
+            while (await reader.ReadAsync()) {
+                return new Snippet(reader);
+            }
+            return null;
         }
 
         public async Task<string[]> GetSnippetsFileNamesAsync(long snippet, MySqlConnection conn) {
@@ -161,12 +198,12 @@ namespace RemoteGitDeploy.Manager {
 
         public async Task<SnippetFile[]> GetSnippetFilesAsync(long snippet, MySqlConnection conn) {
             var snippetFiles = new List<SnippetFile>();
-            await using var cmd = new MySqlCommand("SELECT id, filename, code FROM snippet_files WHERE snippet = @snippet;", conn);
+            await using var cmd = new MySqlCommand("SELECT id, filename, code, language FROM snippet_files WHERE snippet = @snippet;", conn);
             cmd.Parameters.AddWithValue("snippet", snippet);
             await using var reader = await cmd.ExecuteReaderAsync();
             if (!reader.HasRows) return snippetFiles.ToArray();
             while (await reader.ReadAsync()) {
-                snippetFiles.Add(new SnippetFile(reader));
+                snippetFiles.Add(new SnippetFile(reader, snippet));
             }
             return snippetFiles.ToArray();
         }

@@ -1,5 +1,4 @@
 import React from "react";
-import { navigate } from "@reach/router";
 import net from "../../services/net";
 import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";

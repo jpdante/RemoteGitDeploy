@@ -52,15 +52,17 @@ namespace RemoteGitDeploy.API.New {
                         var files = new List<SnippetFile>();
                         foreach (var jToken in filesTokens) {
                             var fileObject = (JObject)jToken;
-                            if (!fileObject.TryGetValue("filename", out var filenameToken) || !fileObject.TryGetValue("code", out var codeToken)) continue;
+                            if (!fileObject.TryGetValue("filename", out var filenameToken) || !fileObject.TryGetValue("code", out var codeToken) || !fileObject.TryGetValue("language", out var languageToken)) continue;
                             var filename = filenameToken?.ToObject<string>();
                             var code = codeToken?.ToObject<string>();
+                            var language = languageToken?.ToObject<string>();
                             if (filename == null || filename.Replace(" ", "").Equals("")) continue;
                             if (code == null || filename.Replace(" ", "").Equals("")) continue;
-                            files.Add(new SnippetFile(-1, snippetId, filename, code));
+                            if (language == null || language.Replace(" ", "").Equals("")) continue;
+                            files.Add(new SnippetFile(-1, snippetId, filename, code, language));
                         }
                         foreach (var file in files) {
-                            await HtcPlugin.DatabaseManager.NewSnippetFileAsync(snippetId, file.Filename, file.Code, conn, transaction);
+                            await HtcPlugin.DatabaseManager.NewSnippetFileAsync(snippetId, file.Filename, file.Code, file.Language, conn, transaction);
                         }
                         await transaction.CommitAsync();
                         httpContext.Response.StatusCode = StatusCodes.Status200OK;

@@ -7,6 +7,7 @@ interface IProps {
   id: number;
   filename: string;
   code: string;
+  language: string;
   isSingle: boolean;
   updateCodeFunc(id: number, code: string): void;
   updateFilenameFunc(id: number, filename: string): void;
@@ -14,14 +15,6 @@ interface IProps {
 }
 
 class CodeEditor extends React.Component<IProps> {
-  constructor(props: IProps) {
-    super(props);
-    this.state = {
-      filename: props.filename,
-      code: props.code,
-    };
-  }
-
   handleRemoveFile = async (e: any) => {
     this.props.removeFileFunc(this.props.id);
   };
@@ -37,10 +30,10 @@ class CodeEditor extends React.Component<IProps> {
               placeholder="Filename with extension..."
               onChange={(e) => {
                 const value = e.target.value.replace(/ /g, "");
-                this.setState({ filename: value });
                 this.props.updateFilenameFunc(this.props.id, value);
               }}
               value={this.props.filename}
+              title={this.props.language}
             />
             {!this.props.isSingle && (
               <div className="input-group-append">
@@ -60,7 +53,6 @@ class CodeEditor extends React.Component<IProps> {
             height="400"
             theme="vs-light"
             onChange={(newValue, e) => {
-              this.setState({ code: newValue });
               this.props.updateCodeFunc(this.props.id, newValue);
             }}
             value={this.props.code}

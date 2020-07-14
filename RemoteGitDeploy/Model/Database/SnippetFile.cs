@@ -21,22 +21,27 @@ namespace RemoteGitDeploy.Model.Database {
         [JsonProperty("code")]
         public string Code;
 
-        public SnippetFile(IDataRecord reader) {
+        [JsonProperty("language")]
+        public string Language;
+
+        public SnippetFile(IDataRecord reader, long snippet) {
             Id = reader.GetInt64(0);
             IdString = Id.ToString();
-            Snippet = reader.GetInt64(1);
+            Snippet = snippet;
             SnippetString = Snippet.ToString();
-            Filename = reader.GetString(2);
-            Code = reader.GetString(3);
+            Filename = reader.GetString(1);
+            Code = reader.GetString(2);
+            Language = reader.GetString(3);
         }
 
-        public SnippetFile(long id, long snippet, string filename, string code) {
+        public SnippetFile(long id, long snippet, string filename, string code, string language) {
             Id = id;
             IdString = Id.ToString();
             Snippet = snippet;
             SnippetString = Snippet.ToString();
             Filename = filename;
             Code = code;
+            Language = language;
         }
     }
 }

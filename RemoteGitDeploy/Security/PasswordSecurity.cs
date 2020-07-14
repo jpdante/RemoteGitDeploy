@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace RemoteGitDeploy.Security {
     public static class PasswordSecurity {
@@ -31,6 +33,17 @@ namespace RemoteGitDeploy.Security {
             byte[] newHash = HashPasswordAsync(password, salt);
             return hash.SequenceEqual(newHash);
         }
+
+        public static string GeneratePassword() {
+            var length = 20;
+            const string valid = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-=;:/?.,><\\|";
+            var res = new StringBuilder();
+            var rnd = new Random();
+            while (0 < length--) {
+                res.Append(valid[rnd.Next(valid.Length)]);
+            }
+            return res.ToString();
+        } 
 
     }
 }

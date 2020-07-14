@@ -45,5 +45,31 @@ namespace RemoteGitDeploy.Utils {
             error = null;
             return true;
         }
+
+        public static bool ValidateUsername(string name, out string error) {
+            if (name.Length < 3) {
+                error = "The username must be at least 3 characters long.";
+                return false;
+            }
+            if (name.Any(char.IsWhiteSpace)) {
+                error = "The username can not have space.";
+                return false;
+            }
+            error = null;
+            return true;
+        }
+
+        public static bool ValidateName(string name, out string error) {
+            if (name.Length < 1) {
+                error = "The name must be at least 1 character long.";
+                return false;
+            }
+            if (name.Any(char.IsDigit)) {
+                error = "The name can not have any digit.";
+                return false;
+            }
+            error = null;
+            return true;
+        }
     }
 }
