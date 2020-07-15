@@ -28,7 +28,7 @@ class ManageTeams extends React.Component<IProps, IState> {
     };
   }
 
-  async componentDidMount() {
+  async componentWillMount() {
     const response = await net.get("/api/get/teams");
     if (response.data.success) {
       this.setState({

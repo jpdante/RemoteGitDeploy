@@ -23,6 +23,7 @@ namespace RemoteGitDeploy {
         public string Version => RemoteGitDeploy.Version.GetVersion();
 
         internal static PluginServerContext PluginServerContext;
+        internal static RepositoryManager RepositoryManager;
         internal static DatabaseManager DatabaseManager;
         internal static CacheManager CacheManager;
         internal static ILogger Logger;
@@ -41,6 +42,9 @@ namespace RemoteGitDeploy {
                     Domain = "some-domain.com",
                     CacheString = "localhost",
                     DatabaseString = "Server=127.0.0.1;Port=3306;Database=remotegitdeploy;Uid=root;Pwd=root;",
+                    GitUsername = "username",
+                    GitPersonalAccessToken = "token",
+                    GitRepositoriesDirectory = "./RemoteGitDeploy/",
                     DevKey = SessionGenerator.Create(),
                 }, true));
             }
@@ -48,6 +52,11 @@ namespace RemoteGitDeploy {
 
             Domain = config.GetValue("Domain", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
             DevKey = config.GetValue("DevKey", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
+
+            var gitUsername = config.GetValue("GitUsername", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
+            var gitPersonalAccessToken = config.GetValue("GitPersonalAccessToken", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
+            var gitRepositoriesDirectory = config.GetValue("GitRepositoriesDirectory", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
+            RepositoryManager = new RepositoryManager(gitUsername, gitPersonalAccessToken, gitRepositoriesDirectory);
 
             var cacheString = config.GetValue("CacheString", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
             CacheManager = new CacheManager(cacheString);

@@ -30,7 +30,7 @@ class NewRepository extends React.Component<IProps, IState> {
     };
   }
 
-  async componentDidMount() {
+  async componentWillMount() {
     this.setState({ loadingTeams: true });
     const response = await net.get("/api/get/teams");
     if (response.data.success) {
@@ -65,11 +65,19 @@ class NewRepository extends React.Component<IProps, IState> {
                   </h2>
                   <hr />
                   <div className="form-group">
-                    <label>Github SSH Git</label>
+                    <label>SSH Git Link</label>
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Ex: git@github.com:jpdante/HtcSharp.git"
+                      placeholder="Ex: https://github.com/jpdante/HtcSharp.git"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Repository name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Ex: HtcSharp"
                     />
                   </div>
                   <div className="form-group">
@@ -77,7 +85,7 @@ class NewRepository extends React.Component<IProps, IState> {
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="ThisIsMyRepo"
+                      placeholder="Ex: This is my repository..."
                     />
                   </div>
                   <div className="form-group">

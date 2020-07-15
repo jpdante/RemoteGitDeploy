@@ -34,7 +34,7 @@ class ManageSnippets extends React.Component<IProps, IState> {
     };
   }
 
-  async componentDidMount() {
+  async componentWillMount() {
     const response = await net.get("/api/get/snippets");
     if (response.data.success) {
       this.setState({
