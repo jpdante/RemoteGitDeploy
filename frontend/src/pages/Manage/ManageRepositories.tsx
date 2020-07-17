@@ -6,43 +6,45 @@ import net from "../../services/net";
 
 interface IProps {}
 
-interface IFile {
-  filename: string;
-  code: string;
+interface ITeam {
+  id: string;
+  name: string;
+  description: string;
 }
 
-interface ISnippet {
+interface IRepository {
   id: string;
   guid: string;
+  name: string;
   description: string;
-  files: IFile[];
+  team: ITeam;
 }
 
 interface IState {
   error: string;
   loading: boolean;
-  snippets: ISnippet[];
+  repositories: IRepository[];
 }
 
-class ManageSnippets extends React.Component<IProps, IState> {
+class ManageRepositories extends React.Component<IProps, IState> {
   constructor(props: IProps) {
     super(props);
     this.state = {
       error: "",
       loading: false,
-      snippets: [],
+      repositories: [],
     };
   }
 
   async componentWillMount() {
-    const response = await net.get("/api/get/snippets");
+    const response = await net.get("/api/get/repositories");
     if (response.data.success) {
       this.setState({
-        snippets: response.data.snippets,
+        repositories: response.data.repositories,
       });
     } else {
       this.setState({
-        snippets: [],
+        repositories: [],
       });
     }
   }
@@ -57,22 +59,17 @@ class ManageSnippets extends React.Component<IProps, IState> {
               <div className="row">
                 <div className="col-sm-1 col-md-2 col-lg-2"></div>
                 <div className="col-sm-10 col-md-8 col-lg-8">
-                  <h2 className="text-center mt-3">Managing snippets</h2>
+                  <h2 className="text-center mt-3">Managing repositories</h2>
                   <hr />
                   <div className="list-group">
-                    {this.state.snippets.map((snippet) => (
+                    {this.state.repositories.map((repository) => (
                       <Link
                         type="button"
-                        className="list-group-item d-flex align-items-center list-group-item-action"
-                        to={`/snippet/${snippet.guid}`}
-                        key={snippet.id}
+                        className="list-group-item list-group-item-action"
+                        to={`/repository/${repository.guid}`}
+                        key={repository.id}
                       >
-                        <span className="mr-auto">{snippet.description}</span>
-                        {snippet.files.map((file) => (
-                          <span className="badge badge-primary mx-1">
-                            {file.filename}
-                          </span>
-                        ))}
+                        {repository.team.name}/{repository.name}
                       </Link>
                     ))}
                   </div>
@@ -88,4 +85,4 @@ class ManageSnippets extends React.Component<IProps, IState> {
   }
 }
 
-export default ManageSnippets;
+export default ManageRepositories;

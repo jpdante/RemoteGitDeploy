@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
-using System.Transactions;
+using HtcSharp.Core.Logging.Abstractions;
 using RemoteGitDeploy.Actions.Data;
 using RemoteGitDeploy.Actions.Data.Repository;
 using RemoteGitDeploy.Actions.Repository;
-using RemoteGitDeploy.Model;
-using RemoteGitDeploy.Utils;
 
 namespace RemoteGitDeploy.Manager {
     public class RepositoryManager {
@@ -80,14 +77,15 @@ namespace RemoteGitDeploy.Manager {
         }
 
         private async Task CreateRepository(IRepositoryAction action, RepositoryCloneData data) {
-            await using var conn = await HtcPlugin.DatabaseManager.GetConnectionAsync();
-            long id = StaticData.IdGenerator.CreateId();
-            if (await HtcPlugin.DatabaseManager.NewRepositoryAsync(id, data.Id, data.Account, data.Name, data.Git, data.Team, data.Description, conn)) {
-                action.Success = true;
-            } else {
+            try {
+                await using var conn = await HtcPlugin.DatabaseManager.GetConnectionAsync();
+                action.Success = await HtcPlugin.DatabaseManager.NewRepositoryAsync(data.Id, data.Account, data.Name, data.Git, data.Team, data.Description, conn);
+                action.Finished = true;
+            } catch (Exception ex) {
+                HtcPlugin.Logger.LogError(ex);
                 action.Success = false;
+                action.Finished = true;
             }
-            action.Finished = true;
         }
 
         private void OnActionFinish(IRepositoryAction action, IActionData data) {

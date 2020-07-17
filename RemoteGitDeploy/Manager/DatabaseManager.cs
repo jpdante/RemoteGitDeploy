@@ -76,6 +76,17 @@ namespace RemoteGitDeploy.Manager {
             return null;
         }
 
+        public async Task<User[]> GetUsersAsync(MySqlConnection conn) {
+            var users = new List<User>();
+            await using var cmd = new MySqlCommand("SELECT id, first_name, last_name, email, username description FROM accounts;", conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return users.ToArray();
+            while (await reader.ReadAsync()) {
+                users.Add(new User(reader));
+            }
+            return users.ToArray();
+        }
+
         #endregion
 
         #region Team
@@ -223,9 +234,9 @@ namespace RemoteGitDeploy.Manager {
 
         #region Repository
 
-        public async Task<bool> NewRepositoryAsync(long id, string guid, long creator, string name, string git, long team, string description, MySqlConnection conn) {
+        public async Task<bool> NewRepositoryAsync(string guid, long creator, string name, string git, long team, string description, MySqlConnection conn) {
             await using var cmd = new MySqlCommand("INSERT INTO repositories (id, guid, creator, name, git, team, description) VALUES (@id, @guid, @creator, @name, @git, @team, @description);", conn);
-            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("id", StaticData.IdGenerator.CreateId());
             cmd.Parameters.AddWithValue("guid", guid);
             cmd.Parameters.AddWithValue("creator", creator);
             cmd.Parameters.AddWithValue("name", name);
@@ -240,6 +251,17 @@ namespace RemoteGitDeploy.Manager {
             cmd.Parameters.AddWithValue("name", name);
             await using var reader = await cmd.ExecuteReaderAsync();
             return reader.HasRows;
+        }
+
+        public async Task<Repository[]> GetRepositoriesAsync(MySqlConnection conn) {
+            var repositories = new List<Repository>();
+            await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team;", conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return repositories.ToArray();
+            while (await reader.ReadAsync()) {
+                repositories.Add(new Repository(reader));
+            }
+            return repositories.ToArray();
         }
 
         #endregion

@@ -13,8 +13,17 @@ interface ITeam {
   description: string;
 }
 
+interface IRepository {
+  id: string;
+  guid: string;
+  name: string;
+  description: string;
+  team: ITeam;
+}
+
 interface IState {
   teams: ITeam[];
+  repositories: IRepository[];
 }
 
 class SideBar extends React.Component<StoreProps, IState> {
@@ -22,11 +31,22 @@ class SideBar extends React.Component<StoreProps, IState> {
     super(props);
     this.state = {
       teams: [],
+      repositories: [],
     };
   }
 
   async componentDidMount() {
-    const response = await net.get("/api/get/teams");
+    var response = await net.get("/api/get/repositories");
+    if (response.data.success) {
+      this.setState({
+        repositories: response.data.repositories,
+      });
+    } else {
+      this.setState({
+        repositories: [],
+      });
+    }
+    response = await net.get("/api/get/teams");
     if (response.data.success) {
       this.setState({
         teams: response.data.teams,
@@ -52,22 +72,16 @@ class SideBar extends React.Component<StoreProps, IState> {
           </Link>
         </div>
         <ul className="nav flex-column">
-          <li className="nav-item">
-            <Link className="nav-link active" to="/action/3">
+        {this.state.repositories.map((repository) => (
+            <li className="nav-item" key={repository.id}>
+              <Link className="nav-link" to={`/repository/${repository.guid}`}>
               <div className={styles.repositoryIcon}>
                 <RepoIcon size={16} />
               </div>
-              <strong>SteamLab/Frontend</strong>
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link active" to="/action/3">
-              <div className={styles.repositoryIcon}>
-                <RepoIcon size={16} />
-              </div>
-              <strong>SteamLab/Backend</strong>
-            </Link>
-          </li>
+              <strong>{repository.team.name}/{repository.name}</strong>
+              </Link>
+            </li>
+          ))}
         </ul>
         <hr />
         <div className="d-flex justify-content-between flex-items-center flex-wrap mb-2">

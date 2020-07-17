@@ -59,6 +59,7 @@ class ManageTeams extends React.Component<IProps, IState> {
                         type="button"
                         className="list-group-item list-group-item-action"
                         to={`/teams/${team.name}`}
+                        key={team.id}
                       >
                         {team.name}
                       </Link>

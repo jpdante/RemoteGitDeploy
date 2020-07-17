@@ -6,43 +6,39 @@ import net from "../../services/net";
 
 interface IProps {}
 
-interface IFile {
-  filename: string;
-  code: string;
-}
-
-interface ISnippet {
+interface IUser {
   id: string;
-  guid: string;
-  description: string;
-  files: IFile[];
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
 }
 
 interface IState {
   error: string;
   loading: boolean;
-  snippets: ISnippet[];
+  users: IUser[];
 }
 
-class ManageSnippets extends React.Component<IProps, IState> {
+class ManageUsers extends React.Component<IProps, IState> {
   constructor(props: IProps) {
     super(props);
     this.state = {
       error: "",
       loading: false,
-      snippets: [],
+      users: [],
     };
   }
 
   async componentWillMount() {
-    const response = await net.get("/api/get/snippets");
+    const response = await net.get("/api/get/users");
     if (response.data.success) {
       this.setState({
-        snippets: response.data.snippets,
+        users: response.data.users,
       });
     } else {
       this.setState({
-        snippets: [],
+        users: [],
       });
     }
   }
@@ -57,22 +53,25 @@ class ManageSnippets extends React.Component<IProps, IState> {
               <div className="row">
                 <div className="col-sm-1 col-md-2 col-lg-2"></div>
                 <div className="col-sm-10 col-md-8 col-lg-8">
-                  <h2 className="text-center mt-3">Managing snippets</h2>
+                  <h2 className="text-center mt-3">Managing users</h2>
                   <hr />
                   <div className="list-group">
-                    {this.state.snippets.map((snippet) => (
+                    {this.state.users.map((user) => (
                       <Link
                         type="button"
                         className="list-group-item d-flex align-items-center list-group-item-action"
-                        to={`/snippet/${snippet.guid}`}
-                        key={snippet.id}
+                        to={`/user/${user.username}`}
+                        key={user.id}
                       >
-                        <span className="mr-auto">{snippet.description}</span>
-                        {snippet.files.map((file) => (
-                          <span className="badge badge-primary mx-1">
-                            {file.filename}
-                          </span>
-                        ))}
+                        <span className="mr-auto">
+                          {user.firstName} {user.lastName}
+                        </span>
+                        <span className="badge badge-info mx-1">
+                          {user.username}
+                        </span>
+                        <span className="badge badge-primary mx-1">
+                          {user.email}
+                        </span>
                       </Link>
                     ))}
                   </div>
@@ -88,4 +87,4 @@ class ManageSnippets extends React.Component<IProps, IState> {
   }
 }
 
-export default ManageSnippets;
+export default ManageUsers;
