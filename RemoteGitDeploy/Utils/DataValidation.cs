@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net.Mail;
+using HtcSharp.Core.Logging.Abstractions;
 
 namespace RemoteGitDeploy.Utils {
     public class DataValidation {
@@ -66,6 +68,44 @@ namespace RemoteGitDeploy.Utils {
             }
             if (name.Any(char.IsDigit)) {
                 error = "The name can not have any digit.";
+                return false;
+            }
+            error = null;
+            return true;
+        }
+
+        public static bool ValidateRepositoryName(string name, out string error) {
+            if (name.Length < 3) {
+                error = "The repository name must be at least 3 character long.";
+                return false;
+            }
+            if (name.Any(char.IsWhiteSpace)) {
+                error = "The repository name can not have space.";
+                return false;
+            }
+            error = null;
+            return true;
+        }
+
+        public static bool ValidateGitLink(string git, out string error) {
+            if (git.Length < 3) {
+                error = "The git link must be at least 3 character long.";
+                return false;
+            }
+            if (git.Any(char.IsWhiteSpace)) {
+                error = "The git link name can not have space.";
+                return false;
+            }
+            if (!Uri.TryCreate(git, UriKind.RelativeOrAbsolute, out var gitUri)) {
+                error = "The git link must be a valid URL.";
+                return false;
+            }
+            if (!gitUri.Scheme.Equals("http") && !gitUri.Scheme.Equals("https")) {
+                error = "The git link must use the http or https protocol.";
+                return false;
+            }
+            if (!gitUri.AbsolutePath.EndsWith(".git")) {
+                error = "The git link must be a valid git URL.";
                 return false;
             }
             error = null;

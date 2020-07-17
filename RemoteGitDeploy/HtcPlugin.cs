@@ -78,6 +78,7 @@ namespace RemoteGitDeploy {
                 ApiPages.Add(page);
                 UrlMapper.RegisterPluginPage(page.FileName, this);
             }
+            RepositoryManager.Start();
         }
 
         public async Task Disable() {
@@ -86,6 +87,7 @@ namespace RemoteGitDeploy {
             }
             ApiPages.Clear();
             await CacheManager.DisconnectAsync();
+            RepositoryManager.Stop();
         }
 
         public bool IsCompatible(int htcMajor, int htcMinor, int htcPatch) {

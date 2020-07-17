@@ -28,7 +28,6 @@ class NavBar extends React.Component<StoreProps> {
           <div className="d-flex w-100 mr-auto navbar-margin-top-md">
             <ul className="navbar-nav w-100">
               <NavLink to="/dashboard">Dashboard</NavLink>
-              <NavLink to="/issues">Issues</NavLink>
             </ul>
           </div>
           {auth.get("isLogged") && <UserBar />}

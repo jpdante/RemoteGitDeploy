@@ -19,11 +19,11 @@ namespace RemoteGitDeploy.API.New {
                 data.TryGetValue("lastName", out string lastName) &&
                 data.TryGetValue("username", out string username) &&
                 data.TryGetValue("email", out string email)) {
-                if (!DataValidation.ValidateUsername(firstName, out string error)) {
+                if (!DataValidation.ValidateName(firstName, out string error)) {
                     await DefaultResponse.InvalidField(httpContext, "firstname", error);
                     return;
                 }
-                if (!DataValidation.ValidateUsername(lastName, out string error2)) {
+                if (!DataValidation.ValidateName(lastName, out string error2)) {
                     await DefaultResponse.InvalidField(httpContext, "lastname", error2);
                     return;
                 }

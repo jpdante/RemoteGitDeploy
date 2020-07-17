@@ -7,7 +7,6 @@ using HtcSharp.Core.Logging.Abstractions;
 using HtcSharp.Core.Utils;
 using HtcSharp.HttpModule.Http.Abstractions;
 using HtcSharp.HttpModule.Routing;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RemoteGitDeploy.Model.Database;
 using RemoteGitDeploy.Utils;

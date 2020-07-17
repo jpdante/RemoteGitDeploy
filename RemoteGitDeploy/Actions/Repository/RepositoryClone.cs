@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using HtcSharp.Core.Logging.Abstractions;
+using RemoteGitDeploy.Actions.Data;
 using RemoteGitDeploy.Manager;
 using RemoteGitDeploy.Model;
 
@@ -13,22 +15,30 @@ namespace RemoteGitDeploy.Actions.Repository {
         private Process _process;
 
         public bool Running { get; private set; }
-        public bool Success { get; private set; }
+        public bool Success { get; set; }
+        public bool Finished { get; set; }
+        public int DeleteDelay { get; set; }
+        public int KillDelay { get; set; }
         public DateTime StartTime { get; private set; }
         public DateTime ExitTime { get; private set; }
         public List<OutputLine> Output { get; }
+        public IActionData Data { get; }
 
-        public RepositoryClone(string gitLink, string directory) {
+        public RepositoryClone(IActionData data, string gitLink, string directory) {
+            Data = data;
             _gitLink = gitLink;
             _directory = directory;
             Running = false;
             Success = false;
             Output = new List<OutputLine>();
+            DeleteDelay = 60;
+            KillDelay = 300;
         }
 
         public bool Start() {
             if (!RepositoryManager.BreakGitLink(_gitLink, out string scheme, out string domain, out string path)) return false;
             try {
+                if (!Directory.Exists(_directory)) Directory.CreateDirectory(_directory);
                 var processStartInfo = new ProcessStartInfo {
                     FileName = "git",
                     Arguments = $"clone {scheme}://{HtcPlugin.RepositoryManager.GitUsername}:{HtcPlugin.RepositoryManager.GitPersonalAccessToken}@{domain}{path} {_directory}",
@@ -54,7 +64,11 @@ namespace RemoteGitDeploy.Actions.Repository {
                 return true;
             } catch (Exception ex) {
                 Running = false;
+                Success = false;
+                Directory.Delete(_directory, true);
+                ExitTime = DateTime.Now;
                 HtcPlugin.Logger.LogError(ex);
+                OnFinish?.Invoke(this, Data);
                 return false;
             }
         }
@@ -65,13 +79,20 @@ namespace RemoteGitDeploy.Actions.Repository {
             Success = false;
             ExitTime = DateTime.Now;
             Output.Add(new OutputLine($"The process was killed by the manager!", (DateTime.Now - StartTime).Milliseconds));
+            OnFinish?.Invoke(this, Data);
         }
+
+        public event IRepositoryAction.OnFinishDelegate OnFinish;
 
         private void ProcessOnExited(object sender, EventArgs e) {
             Running = false;
             Success = _process.ExitCode == 0;
+            if (!Success) {
+                Directory.Delete(_directory, true);
+            }
             ExitTime = DateTime.Now;
             Output.Add(new OutputLine($"The process ended with code: {_process.ExitCode}", (DateTime.Now - StartTime).Milliseconds));
+            OnFinish?.Invoke(this, Data);
         }
 
         private void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e) {

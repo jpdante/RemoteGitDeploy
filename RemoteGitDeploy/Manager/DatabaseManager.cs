@@ -89,10 +89,21 @@ namespace RemoteGitDeploy.Manager {
         }
 
         public async Task<bool> HasTeamAsync(string name, MySqlConnection conn) {
-            await using var cmd = new MySqlCommand("SELECT name FROM teams WHERE name = @name;", conn);
+            await using var cmd = new MySqlCommand("SELECT id FROM teams WHERE name = @name;", conn);
             cmd.Parameters.AddWithValue("name", name);
             await using var reader = await cmd.ExecuteReaderAsync();
             return reader.HasRows;
+        }
+
+        public async Task<long> HasTeamWithResultAsync(string name, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("SELECT id FROM teams WHERE name = @name;", conn);
+            cmd.Parameters.AddWithValue("name", name);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return -1;
+            while (await reader.ReadAsync()) {
+                return reader.GetInt64(0);
+            }
+            return -1;
         }
 
         public async Task<Team[]> GetTeamsAsync(MySqlConnection conn) {
@@ -206,6 +217,29 @@ namespace RemoteGitDeploy.Manager {
                 snippetFiles.Add(new SnippetFile(reader, snippet));
             }
             return snippetFiles.ToArray();
+        }
+
+        #endregion
+
+        #region Repository
+
+        public async Task<bool> NewRepositoryAsync(long id, string guid, long creator, string name, string git, long team, string description, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("INSERT INTO repositories (id, guid, creator, name, git, team, description) VALUES (@id, @guid, @creator, @name, @git, @team, @description);", conn);
+            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("guid", guid);
+            cmd.Parameters.AddWithValue("creator", creator);
+            cmd.Parameters.AddWithValue("name", name);
+            cmd.Parameters.AddWithValue("git", git);
+            cmd.Parameters.AddWithValue("team", team);
+            cmd.Parameters.AddWithValue("description", description);
+            return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
+        public async Task<bool> HasRepositoryAsync(string name, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("SELECT id FROM repositories WHERE name = @name;", conn);
+            cmd.Parameters.AddWithValue("name", name);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            return reader.HasRows;
         }
 
         #endregion
