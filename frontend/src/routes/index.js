@@ -17,6 +17,7 @@ import ManageSnippets from './../pages/Manage/ManageSnippets';
 import Snippet from './../pages/Snippet/index';
 import ManageUsers from './../pages/Manage/ManageUsers';
 import ManageRepositories from './../pages/Manage/ManageRepositories';
+import Repository from './../pages/Repository/index';
 
 const PrivateRoute = (props) => {
   const stores = Store.useStores();
@@ -53,6 +54,7 @@ class Routes extends React.Component {
         <PrivateRoute path="/manage/repositories" component={ManageRepositories} />
 
         <PrivateRoute path="/snippet/:guid" component={Snippet} />
+        <PrivateRoute path="/repository/:guid" component={Repository} />
 
         <NotFound path="*" />
       </Router>

@@ -6,8 +6,28 @@ function Footer() {
     <div>
       <hr />
       <div className="d-flex justify-content-between flex-items-center flex-wrap">
-        <Link className="flex-fill text-center" to="/dashboard">© 2020 GRD</Link>
-        <h6 className="flex-fill text-center">penis</h6>
+        <a
+          className="flex-fill text-center"
+          href="https://github.com/jpdante/RemoteGitDeploy/blob/master/LICENSE"
+        >
+          MIT License
+        </a>
+        <span className="flex-fill text-center">
+          <a
+            className="flex-fill text-center"
+            href="https://github.com/jpdante"
+          >
+            João Pedro Dante
+          </a>
+        </span>
+      </div>
+      <div className="d-flex justify-content-between flex-items-center flex-wrap">
+        <a
+          className="flex-fill text-center"
+          href="https://github.com/jpdante/RemoteGitDeploy"
+        >
+          &copy; 2020 RGD
+        </a>
       </div>
     </div>
   );

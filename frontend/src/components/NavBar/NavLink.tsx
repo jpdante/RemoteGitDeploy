@@ -18,7 +18,6 @@ function NavLink(props: PropType) {
         }}
       >
         {props.children}
-        <div className="nav-item-active" />
       </Link>
     </li>
   );

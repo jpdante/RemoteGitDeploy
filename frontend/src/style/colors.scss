@@ -1,5 +1,22 @@
-$body-bg: #F6F8FA;
+$body-bg: #f6f8fa;
+
+.nav-tabs {
+  .nav-link {
+    color: #1b1f23;
+    svg {
+      margin-bottom: 2px;
+      color: #7b8d9e;
+    }
+  }
+  .active {
+    color: #1b1f23 !important;
+    font-weight: 600 !important;
+    svg {
+      color: #1b1f23 !important;
+    }
+  }
+}
 
 .bg-darker {
-    background-color: #24292E;
+  background-color: #24292e;
 }

@@ -264,6 +264,17 @@ namespace RemoteGitDeploy.Manager {
             return repositories.ToArray();
         }
 
+        public async Task<FullRepository> GetFullRepositoryAsync(string guid, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team WHERE repositories.guid = @guid;", conn);
+            cmd.Parameters.AddWithValue("guid", guid);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return null;
+            while (await reader.ReadAsync()) {
+                return new FullRepository(reader);
+            }
+            return null;
+        }
+
         #endregion
     }
 }
