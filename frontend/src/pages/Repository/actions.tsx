@@ -1,4 +1,5 @@
 import React from "react";
+import { PlayIcon } from "@primer/octicons-react";
 
 interface ITeam {
   id: string;
@@ -31,7 +32,12 @@ class ActionsTab extends React.Component<IProps> {
         role="tabpanel"
         aria-labelledby="v-pills-actions-tab"
       >
-        <h1>Actions</h1>
+        <div className="card">
+          <div className="card-header"><PlayIcon size={16} /> Featured</div>
+          <div className="card-body">
+            <h5 className="card-title">Special title treatment</h5>
+          </div>
+        </div>
       </div>
     );
   }

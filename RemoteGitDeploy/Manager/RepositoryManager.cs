@@ -91,6 +91,18 @@ namespace RemoteGitDeploy.Manager {
             repositoryClone.Start();
         }
 
+        public async Task PullRepository(Repository repository) {
+            repository.LastCommit = await GetLocalRepositoryLastCommit(repository.Guid);
+            string lastRemoteCommit = await GetRemoteRepositoryLastCommit(repository.Guid, repository.Git);
+            if (!repository.LastCommit.Equals(lastRemoteCommit)) {
+                var action = new RepositoryPull(new RepositoryPullData(repository.Guid), Path.Combine(GitRepositoriesDirectory, repository.Guid));
+                action.OnFinish += OnActionFinish;
+                _activeActions.Add(action);
+                action.Start();
+            }
+            repository.LastUpdate = DateTime.UtcNow;
+        }
+
         public bool HasProcessingRepository(string name) {
             foreach (var action in _activeActions.Where(action => !action.Finished)) {
                 switch (action.Data.Type) {

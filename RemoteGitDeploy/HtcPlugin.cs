@@ -30,6 +30,7 @@ namespace RemoteGitDeploy {
         internal static List<IAPI> ApiPages;
         internal static string Domain { get; private set; }
         internal static string DevKey { get; private set; }
+        internal static string RepositorySecreteKey { get; private set; }
 
         public Task Load(PluginServerContext pluginServerContext, ILogger logger) {
             PluginServerContext = pluginServerContext;
@@ -46,12 +47,14 @@ namespace RemoteGitDeploy {
                     GitPersonalAccessToken = "token",
                     GitRepositoriesDirectory = "./RemoteGitDeploy/",
                     DevKey = SessionGenerator.Create(),
+                    RepositorySecreteKey = SessionGenerator.Create(),
                 }, true));
             }
             var config = JsonUtils.GetJsonFile(path);
 
             Domain = config.GetValue("Domain", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
             DevKey = config.GetValue("DevKey", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
+            RepositorySecreteKey = config.GetValue("RepositorySecreteKey", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
 
             var gitUsername = config.GetValue("GitUsername", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
             var gitPersonalAccessToken = config.GetValue("GitPersonalAccessToken", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
@@ -100,7 +103,7 @@ namespace RemoteGitDeploy {
                     await DefaultResponse.InternalError(httpContext);
                     return;
                 }
-                if (!httpContext.Request.Host.ToString().Equals(Domain)) return;
+                //if (!httpContext.Request.Host.ToString().Equals(Domain)) return;
                 foreach (var page in ApiPages.Where(page => filename.Equals(page.FileName))) {
                     Logger.LogDebug($"{httpContext.Request.Method} {filename}");
                     if (!httpContext.Request.Method.Equals(page.RequestMethod, StringComparison.CurrentCultureIgnoreCase)) continue;
