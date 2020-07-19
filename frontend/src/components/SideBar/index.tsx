@@ -1,6 +1,4 @@
 import React from "react";
-import type { StoreProps } from "../../undux";
-import Store from "../../undux";
 import { Link } from "@reach/router";
 import { PlusIcon, RepoIcon, PeopleIcon } from "@primer/octicons-react";
 
@@ -26,8 +24,10 @@ interface IState {
   repositories: IRepository[];
 }
 
-class SideBar extends React.Component<StoreProps, IState> {
-  constructor(props: StoreProps) {
+interface IProps { }
+
+class SideBar extends React.Component<IProps, IState> {
+  constructor(props: IProps) {
     super(props);
     this.state = {
       teams: [],
@@ -59,7 +59,6 @@ class SideBar extends React.Component<StoreProps, IState> {
   }
 
   render() {
-    //const { auth } = this.props;
     return (
       <div className={`col-12 col-md-4 col-lg-3 bg-white ${styles.sidebar}`}>
         <div className="d-flex justify-content-between flex-items-center flex-wrap mb-2">
@@ -110,4 +109,4 @@ class SideBar extends React.Component<StoreProps, IState> {
   }
 }
 
-export default Store.withStores(SideBar);
+export default SideBar;

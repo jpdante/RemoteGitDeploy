@@ -21,6 +21,8 @@ interface IRepository {
   name: string;
   description: string;
   team: ITeam;
+  lastCommit: string;
+  lastUpdate: string;
 }
 
 interface IProps {
@@ -47,6 +49,8 @@ class Repository extends React.Component<IProps, IState> {
           name: "",
           description: "",
         },
+        lastCommit: "",
+        lastUpdate: "",
       },
     };
   }

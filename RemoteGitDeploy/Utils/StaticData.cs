@@ -1,4 +1,5 @@
-﻿using IdGen;
+﻿using System;
+using IdGen;
 
 namespace RemoteGitDeploy.Utils {
     public class StaticData {

@@ -1,0 +1,22 @@
+.historyCardHeader {
+  padding: 5px 10px !important;
+  font-weight: 500;
+  font-size: 16px;
+  span {
+    margin-top: 3px;
+  }
+  svg {
+    margin-bottom: 1px;
+    margin-right: 10px;
+  }
+}
+
+.historyCardBody {
+  padding: 10px !important;
+  font-size: 13px;
+}
+
+.historyCardLabel {
+  margin-right: 10px;
+  font-weight: 500;
+}

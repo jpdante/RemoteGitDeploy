@@ -22,6 +22,14 @@ namespace RemoteGitDeploy.API.Get {
                     await DefaultResponse.Failed(httpContext);
                     return;
                 }
+                var repo = HtcPlugin.RepositoryManager.GetRepository(repository.Guid);
+                if (repo == null) {
+                    repository.LastCommit = "Internal server error";
+                    repository.LastUpdate = "Internal server error";
+                } else {
+                    repository.LastCommit = repo.LastCommit;
+                    repository.LastUpdate = repo.LastUpdate.ToString("dd/MM/yyyy HH:mm:ss");
+                }
                 await httpContext.Response.WriteAsync(JsonUtils.SerializeObject(new { success = true, repository }));
             } else await DefaultResponse.FieldsMissing(httpContext);
         }

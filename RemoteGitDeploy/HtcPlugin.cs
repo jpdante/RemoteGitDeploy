@@ -78,7 +78,7 @@ namespace RemoteGitDeploy {
                 ApiPages.Add(page);
                 UrlMapper.RegisterPluginPage(page.FileName, this);
             }
-            RepositoryManager.Start();
+            await RepositoryManager.Start();
         }
 
         public async Task Disable() {

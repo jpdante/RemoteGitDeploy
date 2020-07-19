@@ -2,5 +2,6 @@
     public enum ActionDataType {
         Unknown = 0,
         NewRepository,
+        PullRepository,
     }
 }

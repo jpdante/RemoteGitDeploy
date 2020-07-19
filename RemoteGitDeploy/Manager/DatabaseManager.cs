@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using HtcSharp.Core.Logging.Abstractions;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json;
 using RemoteGitDeploy.Model.Database;
 using RemoteGitDeploy.Utils;
 
@@ -234,9 +235,9 @@ namespace RemoteGitDeploy.Manager {
 
         #region Repository
 
-        public async Task<bool> NewRepositoryAsync(string guid, long creator, string name, string git, long team, string description, MySqlConnection conn) {
+        public async Task<bool> NewRepositoryAsync(long id, string guid, long creator, string name, string git, long team, string description, MySqlConnection conn) {
             await using var cmd = new MySqlCommand("INSERT INTO repositories (id, guid, creator, name, git, team, description) VALUES (@id, @guid, @creator, @name, @git, @team, @description);", conn);
-            cmd.Parameters.AddWithValue("id", StaticData.IdGenerator.CreateId());
+            cmd.Parameters.AddWithValue("id", id);
             cmd.Parameters.AddWithValue("guid", guid);
             cmd.Parameters.AddWithValue("creator", creator);
             cmd.Parameters.AddWithValue("name", name);
@@ -265,7 +266,7 @@ namespace RemoteGitDeploy.Manager {
         }
 
         public async Task<FullRepository> GetFullRepositoryAsync(string guid, MySqlConnection conn) {
-            await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team WHERE repositories.guid = @guid;", conn);
+            await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.git, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team WHERE repositories.guid = @guid;", conn);
             cmd.Parameters.AddWithValue("guid", guid);
             await using var reader = await cmd.ExecuteReaderAsync();
             if (!reader.HasRows) return null;
@@ -273,6 +274,54 @@ namespace RemoteGitDeploy.Manager {
                 return new FullRepository(reader);
             }
             return null;
+        }
+
+        public async Task<FullRepository[]> GetFullRepositoriesAsync(MySqlConnection conn) {
+            var repositories = new List<FullRepository>();
+            await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.git, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team;", conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return repositories.ToArray();
+            while (await reader.ReadAsync()) {
+                repositories.Add(new FullRepository(reader));
+            }
+            return repositories.ToArray();
+        }
+
+        #endregion
+
+        #region RepositoryHistory
+
+        public async Task<bool> NewRepositoryHistoryAsync(long repository, int icon, string name, List<RepositoryHistory.Parameter> parameters, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("INSERT INTO repository_history (id, repository, icon, name, parameters) VALUES (@id, @repository, @icon, @name, @parameters);", conn);
+            cmd.Parameters.AddWithValue("id", StaticData.IdGenerator.CreateId());
+            cmd.Parameters.AddWithValue("repository", repository);
+            cmd.Parameters.AddWithValue("icon", icon);
+            cmd.Parameters.AddWithValue("name", name);
+            cmd.Parameters.AddWithValue("parameters", JsonConvert.SerializeObject(parameters, Formatting.None));
+            return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
+        public async Task<RepositoryHistory[]> GetRepositoryHistoryAsync(MySqlConnection conn) {
+            var histories = new List<RepositoryHistory>();
+            await using var cmd = new MySqlCommand("SELECT id, repository, icon, name, parameters FROM repository_history ORDER BY id DESC LIMIT 10;", conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return histories.ToArray();
+            while (await reader.ReadAsync()) {
+                histories.Add(new RepositoryHistory(reader));
+            }
+            return histories.ToArray();
+        }
+
+        public async Task<RepositoryHistory[]> GetRepositoryHistoryAsync(long repository, MySqlConnection conn) {
+            var histories = new List<RepositoryHistory>();
+            await using var cmd = new MySqlCommand("SELECT id, repository, icon, name, parameters FROM repository_history WHERE repository = @repository ORDER BY id DESC LIMIT 10;", conn);
+            cmd.Parameters.AddWithValue("repository", repository);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return histories.ToArray();
+            while (await reader.ReadAsync()) {
+                histories.Add(new RepositoryHistory(reader));
+            }
+            return histories.ToArray();
         }
 
         #endregion

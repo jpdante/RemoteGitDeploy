@@ -1,6 +1,6 @@
 import React from "react";
-
-import styles from "./repository.module.scss";
+import net from "../../services/net";
+import RepositoryHistory from "../../components/RepositoryHistory";
 
 interface ITeam {
   id: string;
@@ -14,16 +14,56 @@ interface IRepository {
   name: string;
   description: string;
   team: ITeam;
+  lastCommit: string;
+  lastUpdate: string;
+}
+
+interface IHistoryParameter {
+  name: string;
+  value: string;
+  color: string;
+}
+
+interface IHistory {
+  id: string;
+  repository: string;
+  icon: number;
+  name: string;
+  date: string;
+  parameters: IHistoryParameter[];
 }
 
 interface IProps {
   repository: IRepository;
 }
 
-class StatusTab extends React.Component<IProps> {
-  handleSubmit = async (e: any) => {
-    e.preventDefault();
-  };
+interface IState {
+  history: IHistory[];
+}
+
+class StatusTab extends React.Component<IProps, IState> {
+  constructor(props: IProps) {
+    super(props);
+    this.state = {
+      history: [],
+    };
+  }
+
+  async componentDidMount() {
+    const { repository } = this.props;
+    const response = await net.post("/api/get/repository/history", {
+      id: repository.id,
+    });
+    if (response.data.success) {
+      this.setState({
+        history: response.data.history,
+      });
+    } else {
+      this.setState({
+        history: [],
+      });
+    }
+  }
 
   render() {
     return (
@@ -38,51 +78,24 @@ class StatusTab extends React.Component<IProps> {
             <tr>
               <th scope="row">Last commit:</th>
               <td>
-                <span className="badge badge-secondary">#87sdtf67sd</span>
+                <span className="badge badge-secondary">
+                  #{this.props.repository.lastCommit}
+                </span>
               </td>
               <th scope="row">Last update:</th>
               <td>
                 <span className="badge badge-secondary">
-                  18/35/3556 10:10:10
+                  {this.props.repository.lastUpdate}
                 </span>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Last build:</th>
-              <td>
-                <span className="badge badge-success">Success</span>
-              </td>
-              <th scope="row">System status:</th>
-              <td>
-                <span className="badge badge-success">Ok</span>
               </td>
             </tr>
           </tbody>
         </table>
         <hr />
         <h5 className="text-center mb-3">Repository history</h5>
-        <div className="card">
-          <div className={`card-header ${styles.historyCardHeader}`}>
-            Repository clone
-            <span className="badge badge-secondary float-right">
-              18/35/3556 10:10:10
-            </span>
-          </div>
-          <div className={`card-body d-flex ${styles.historyCardBody}`}>
-            <div className="flex-fill">
-              <span className={styles.historyCardLabel}>Clone status:</span>
-              <span className="badge badge-success">Success</span>
-            </div>
-            <div className="flex-fill">
-              <span className={styles.historyCardLabel}>Build status:</span>
-              <span className="badge badge-success">Success</span>
-            </div>
-            <div className="flex-fill">
-              <span className={styles.historyCardLabel}>System status:</span>
-              <span className="badge badge-success">Ok</span>
-            </div>
-          </div>
-        </div>
+        {this.state.history.map((history) => (
+          <RepositoryHistory history={history} />
+        ))}
       </div>
     );
   }
