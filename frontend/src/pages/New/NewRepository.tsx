@@ -191,7 +191,7 @@ class NewRepository extends React.Component<IProps, IState> {
                       <h4 className="text-center my-3">Please wait...</h4>
                     </div>
                   )}
-                  <ConsoleLog log={this.state.status.log} />
+                  <ConsoleLog log={this.state.status.log} insideCard={false} />
                 </div>
               ) : (
                 <div className="row">

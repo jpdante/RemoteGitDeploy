@@ -4,7 +4,6 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using HtcSharp.Core.Logging.Abstractions;
 using HtcSharp.HttpModule.Http.Abstractions;
 using HtcSharp.HttpModule.Routing;
 using RemoteGitDeploy.Utils;

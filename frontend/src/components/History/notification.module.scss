@@ -20,3 +20,16 @@
   margin-right: 10px;
   font-weight: 500;
 }
+
+.consoleLog {
+  transition: all 0.5s;
+  opacity: 1;
+  max-height: 1000px;
+  overflow: auto;
+}
+
+.hidden {
+  opacity: 0 !important;
+  max-height: 0px !important;
+  pointer-events: none !important;
+}

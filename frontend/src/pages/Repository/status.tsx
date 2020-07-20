@@ -1,6 +1,6 @@
 import React from "react";
 import net from "../../services/net";
-import RepositoryHistory from "../../components/RepositoryHistory";
+import RepositoryHistory from "../../components/History/RepositoryHistory";
 
 interface ITeam {
   id: string;

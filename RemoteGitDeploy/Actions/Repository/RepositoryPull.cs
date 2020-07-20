@@ -12,8 +12,10 @@ namespace RemoteGitDeploy.Actions.Repository {
         private readonly string _directory;
         private Process _process;
 
+        public string RepositoryGuid { get; }
         public bool Running { get; private set; }
         public bool Success { get; set; }
+        public bool InQueue { get; set; }
         public bool Finished { get; set; }
         public int DeleteDelay { get; set; }
         public int KillDelay { get; set; }
@@ -22,7 +24,8 @@ namespace RemoteGitDeploy.Actions.Repository {
         public List<OutputLine> Output { get; }
         public IActionData Data { get; }
 
-        public RepositoryPull(IActionData data, string directory) {
+        public RepositoryPull(string repositoryGuid, IActionData data, string directory) {
+            RepositoryGuid = repositoryGuid;
             Data = data;
             _directory = directory;
             Running = false;
@@ -30,11 +33,11 @@ namespace RemoteGitDeploy.Actions.Repository {
             Output = new List<OutputLine>();
             DeleteDelay = 60;
             KillDelay = 300;
+            InQueue = true;
         }
 
         public bool Start() {
             try {
-                if (!Directory.Exists(_directory)) Directory.CreateDirectory(_directory);
                 var processStartInfo = new ProcessStartInfo {
                     FileName = "git",
                     Arguments = "pull",
@@ -69,7 +72,7 @@ namespace RemoteGitDeploy.Actions.Repository {
         }
 
         public void ForceKill() {
-            _process.Kill(true);
+            if (_process != null && !_process.HasExited) _process.Kill(true);
             Running = false;
             Success = false;
             ExitTime = DateTime.Now;

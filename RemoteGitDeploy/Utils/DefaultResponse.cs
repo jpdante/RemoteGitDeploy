@@ -53,9 +53,14 @@ namespace RemoteGitDeploy.Utils {
             await httpContext.Response.WriteAsync("{\"success\":false}");
         }
 
+        public static async Task Failed(HttpContext httpContext, string message) {
+            httpContext.Response.StatusCode = StatusCodes.Status200OK;
+            await httpContext.Response.WriteAsync($"{{\"success\":false,\"message\":\"{message}\"}}");
+        }
+
         public static async Task FailedParsingData(HttpContext httpContext) {
             httpContext.Response.StatusCode = StatusCodes.Status200OK;
-            await httpContext.Response.WriteAsync("{\"success\":false,\"message\":\"errors.failedParsingData\"}");
+            await httpContext.Response.WriteAsync("{\"success\":false,\"message\":\"A failure occurred while attempting to decode the data.\"}");
         }
     }
 }

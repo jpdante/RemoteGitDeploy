@@ -1,5 +1,9 @@
 import React from "react";
-import { DesktopDownloadIcon, SyncIcon } from "@primer/octicons-react";
+import {
+  DesktopDownloadIcon,
+  SyncIcon,
+  PlayIcon,
+} from "@primer/octicons-react";
 
 import styles from "./notification.module.scss";
 
@@ -23,12 +27,20 @@ interface IProps {
 }
 
 class RepositoryHistory extends React.Component<IProps> {
+  constructor(props: IProps) {
+    super(props);
+    this.state = {
+      hidden: true,
+    };
+  }
+
   render() {
     return (
       <div className="card mb-3">
         <div className={`card-header ${styles.historyCardHeader}`}>
-          {this.props.history.icon === 1 && (<DesktopDownloadIcon size={16} />)}
-          {this.props.history.icon === 2 && (<SyncIcon size={16} />)}
+          {this.props.history.icon === 1 && <DesktopDownloadIcon size={16} />}
+          {this.props.history.icon === 2 && <SyncIcon size={16} />}
+          {this.props.history.icon === 3 && <PlayIcon size={16} />}
           {this.props.history.name}
           <span className="badge badge-secondary float-right">
             {this.props.history.date}

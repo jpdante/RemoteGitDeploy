@@ -254,6 +254,12 @@ namespace RemoteGitDeploy.Manager {
             return reader.HasRows;
         }
 
+        public async Task<bool> DeleteRepositoryAsync(long repository, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("DELETE FROM repositories WHERE id = @repository;", conn);
+            cmd.Parameters.AddWithValue("repository", repository);
+            return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
         public async Task<Repository[]> GetRepositoriesAsync(MySqlConnection conn) {
             var repositories = new List<Repository>();
             await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team;", conn);
@@ -320,6 +326,45 @@ namespace RemoteGitDeploy.Manager {
             if (!reader.HasRows) return histories.ToArray();
             while (await reader.ReadAsync()) {
                 histories.Add(new RepositoryHistory(reader));
+            }
+            return histories.ToArray();
+        }
+
+        #endregion
+
+        #region ActionHistory
+
+        public async Task<bool> NewActionHistoryAsync(string guid, long repository, string name, List<RepositoryHistory.Parameter> parameters, string content, bool success, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("INSERT INTO action_history (id, guid, repository, name, parameters, content, success) VALUES (@id, @guid, @repository, @name, @parameters, @content, @success);", conn);
+            cmd.Parameters.AddWithValue("id", StaticData.IdGenerator.CreateId());
+            cmd.Parameters.AddWithValue("guid", guid);
+            cmd.Parameters.AddWithValue("repository", repository);
+            cmd.Parameters.AddWithValue("name", name);
+            cmd.Parameters.AddWithValue("parameters", JsonConvert.SerializeObject(parameters, Formatting.None));
+            cmd.Parameters.AddWithValue("content", content);
+            cmd.Parameters.AddWithValue("success", success);
+            return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
+        public async Task<ActionHistory[]> GetActionsHistoryAsync(MySqlConnection conn) {
+            var histories = new List<ActionHistory>();
+            await using var cmd = new MySqlCommand("SELECT id, guid, repository, name, parameters, content, success FROM action_history ORDER BY id DESC LIMIT 10;", conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return histories.ToArray();
+            while (await reader.ReadAsync()) {
+                histories.Add(new ActionHistory(reader));
+            }
+            return histories.ToArray();
+        }
+
+        public async Task<ActionHistory[]> GetActionsHistoryAsync(long repository, MySqlConnection conn) {
+            var histories = new List<ActionHistory>();
+            await using var cmd = new MySqlCommand("SELECT id, guid, repository, name, parameters, content, success FROM action_history WHERE repository = @repository ORDER BY id DESC LIMIT 10;", conn);
+            cmd.Parameters.AddWithValue("repository", repository);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!reader.HasRows) return histories.ToArray();
+            while (await reader.ReadAsync()) {
+                histories.Add(new ActionHistory(reader));
             }
             return histories.ToArray();
         }

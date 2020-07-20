@@ -1,5 +1,6 @@
 import React from "react";
-import { PlayIcon } from "@primer/octicons-react";
+import net from "../../services/net";
+import ActionHistory from "../../components/History/ActionHistory";
 
 interface ITeam {
   id: string;
@@ -15,14 +16,58 @@ interface IRepository {
   team: ITeam;
 }
 
+interface IHistoryParameter {
+  name: string;
+  value: string;
+  color: string;
+}
+
+interface ILog {
+  data: string;
+  timespan: number;
+}
+
+interface IHistory {
+  id: string;
+  repository: string;
+  name: string;
+  date: string;
+  parameters: IHistoryParameter[];
+  logs: ILog[];
+  success: boolean;
+}
+
 interface IProps {
   repository: IRepository;
 }
 
-class ActionsTab extends React.Component<IProps> {
-  handleSubmit = async (e: any) => {
-    e.preventDefault();
-  };
+interface IState {
+  history: IHistory[];
+}
+
+class ActionsTab extends React.Component<IProps, IState> {
+  constructor(props: IProps) {
+    super(props);
+    this.state = {
+      history: [],
+    };
+  }
+
+  async componentDidMount() {
+    const { repository } = this.props;
+    const response = await net.post("/api/get/action/history", {
+      id: repository.id,
+    });
+    if (response.data.success) {
+      this.setState({
+        history: response.data.history,
+      });
+    } else {
+      this.setState({
+        history: [],
+      });
+    }
+  }
 
   render() {
     return (
@@ -32,12 +77,10 @@ class ActionsTab extends React.Component<IProps> {
         role="tabpanel"
         aria-labelledby="v-pills-actions-tab"
       >
-        <div className="card">
-          <div className="card-header"><PlayIcon size={16} /> Featured</div>
-          <div className="card-body">
-            <h5 className="card-title">Special title treatment</h5>
-          </div>
-        </div>
+        <h5 className="text-center mb-3">Action history</h5>
+        {this.state.history.map((history) => (
+          <ActionHistory history={history} />
+        ))}
       </div>
     );
   }

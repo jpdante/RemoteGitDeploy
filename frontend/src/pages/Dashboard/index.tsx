@@ -3,7 +3,7 @@ import NavBar from "../../components/NavBar";
 import SideBar from "../../components/SideBar";
 import Footer from "../../components/Footer";
 import net from "../../services/net";
-import RepositoryHistory from "../../components/RepositoryHistory";
+import RepositoryHistory from "../../components/History/RepositoryHistory";
 
 interface IHistoryParameter {
   name: string;
@@ -53,7 +53,7 @@ class Dashboard extends React.Component<IProps, IState> {
         <div className="container-fluid wrapper">
           <div className="row">
             <SideBar />
-            <div className="col-12 col-md-8 col-lg-9 content">
+            <div className="col-12 col-md-8 col-lg-9 content auto-overflow">
               {this.state.history.map((history) => (
                 <RepositoryHistory history={history} />
               ))}

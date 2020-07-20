@@ -22,6 +22,7 @@ namespace RemoteGitDeploy.API.Status {
                         success = true,
                         status = new {
                             success = action.Success,
+                            inQueue = action.InQueue,
                             finished = action.Finished,
                             log = action.Output,
                             guid = action.Data.Id

@@ -6,8 +6,10 @@ using RemoteGitDeploy.Model;
 
 namespace RemoteGitDeploy.Actions.Repository {
     public interface IRepositoryAction {
+        public string RepositoryGuid { get; }
         public bool Running { get; }
         public bool Success { get; set; }
+        public bool InQueue { get; set; }
         public bool Finished { get; set; }
         public int DeleteDelay { get; set; }
         public int KillDelay { get; set; }

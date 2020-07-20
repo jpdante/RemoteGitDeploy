@@ -14,8 +14,10 @@ namespace RemoteGitDeploy.Actions.Repository {
         private readonly string _directory;
         private Process _process;
 
+        public string RepositoryGuid { get; }
         public bool Running { get; private set; }
         public bool Success { get; set; }
+        public bool InQueue { get; set; }
         public bool Finished { get; set; }
         public int DeleteDelay { get; set; }
         public int KillDelay { get; set; }
@@ -24,7 +26,8 @@ namespace RemoteGitDeploy.Actions.Repository {
         public List<OutputLine> Output { get; }
         public IActionData Data { get; }
 
-        public RepositoryClone(IActionData data, string gitLink, string directory) {
+        public RepositoryClone(string repositoryGuid, IActionData data, string gitLink, string directory) {
+            RepositoryGuid = repositoryGuid;
             Data = data;
             _gitLink = gitLink;
             _directory = directory;
@@ -33,6 +36,7 @@ namespace RemoteGitDeploy.Actions.Repository {
             Output = new List<OutputLine>();
             DeleteDelay = 60;
             KillDelay = 300;
+            InQueue = true;
         }
 
         public bool Start() {
@@ -65,7 +69,11 @@ namespace RemoteGitDeploy.Actions.Repository {
             } catch (Exception ex) {
                 Running = false;
                 Success = false;
-                Directory.Delete(_directory, true);
+                try {
+                    Directory.Delete(_directory, true);
+                } catch {
+                    // ignored
+                }
                 ExitTime = DateTime.Now;
                 HtcPlugin.Logger.LogError(ex);
                 OnFinish?.Invoke(this, Data);
@@ -74,7 +82,7 @@ namespace RemoteGitDeploy.Actions.Repository {
         }
 
         public void ForceKill() {
-            _process.Kill(true);
+            if (_process != null && !_process.HasExited) _process.Kill(true);
             Running = false;
             Success = false;
             ExitTime = DateTime.Now;

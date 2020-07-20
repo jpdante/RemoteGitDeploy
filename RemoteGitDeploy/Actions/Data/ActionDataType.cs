@@ -3,5 +3,7 @@
         Unknown = 0,
         NewRepository,
         PullRepository,
+        RunAction,
+        DeleteRepository,
     }
 }
