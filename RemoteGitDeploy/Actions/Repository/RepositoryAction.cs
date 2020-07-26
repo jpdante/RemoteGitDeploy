@@ -52,10 +52,34 @@ namespace RemoteGitDeploy.Actions.Repository {
                 Func<string, string, int> runProcess = (fileName, arguments) => {
                     var id = Guid.NewGuid().ToString();
                     var processStartInfo = new ProcessStartInfo {
-                        FileName = fileName, Arguments = arguments, WorkingDirectory = _directory, RedirectStandardError = true, RedirectStandardOutput = true,
+                        FileName = fileName,
+                        Arguments = arguments,
+                        WorkingDirectory = _directory,
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true,
                     };
                     Output.Add(new OutputLine($"[{id}] Starting process: \"{fileName} {arguments}\"", (DateTime.Now - StartTime).Milliseconds));
-                    _process = new Process {StartInfo = processStartInfo,};
+                    _process = new Process { StartInfo = processStartInfo, };
+                    _process.OutputDataReceived += ProcessOnOutputDataReceived;
+                    _process.ErrorDataReceived += ProcessOnErrorDataReceived;
+                    _process.Start();
+                    _process.BeginOutputReadLine();
+                    _process.BeginErrorReadLine();
+                    _process.WaitForExit();
+                    Output.Add(new OutputLine($"[{id}] Process ended with code: {_process.ExitCode}", (DateTime.Now - StartTime).Milliseconds));
+                    return _process.ExitCode;
+                };
+                Func<string, string, string, int> runProcessWorkingDirectory = (fileName, arguments, workingDirectory) => {
+                    var id = Guid.NewGuid().ToString();
+                    var processStartInfo = new ProcessStartInfo {
+                        FileName = fileName,
+                        Arguments = arguments,
+                        WorkingDirectory = workingDirectory,
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true,
+                    };
+                    Output.Add(new OutputLine($"[{id}] Starting process: \"{fileName} {arguments}\", Working on \"{workingDirectory}\"", (DateTime.Now - StartTime).Milliseconds));
+                    _process = new Process { StartInfo = processStartInfo, };
                     _process.OutputDataReceived += ProcessOnOutputDataReceived;
                     _process.ErrorDataReceived += ProcessOnErrorDataReceived;
                     _process.Start();
@@ -71,6 +95,7 @@ namespace RemoteGitDeploy.Actions.Repository {
                     Output.Add(new OutputLine($"Script status set with code: {code}", (DateTime.Now - StartTime).Milliseconds));
                 };
                 _luaScript.Globals["run"] = runProcess;
+                _luaScript.Globals["runWD"] = runProcessWorkingDirectory;
                 _luaScript.Globals["setStatus"] = setStatus;
                 Task.Run(() => {
                     _luaScript.DoFile(_filename);

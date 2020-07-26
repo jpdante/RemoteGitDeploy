@@ -105,7 +105,7 @@ namespace RemoteGitDeploy {
                 }
                 //if (!httpContext.Request.Host.ToString().Equals(Domain)) return;
                 foreach (var page in ApiPages.Where(page => filename.Equals(page.FileName))) {
-                    Logger.LogDebug($"{httpContext.Request.Method} {filename}");
+                    //Logger.LogDebug($"{httpContext.Request.Method} {filename}");
                     if (!httpContext.Request.Method.Equals(page.RequestMethod, StringComparison.CurrentCultureIgnoreCase)) continue;
                     if (page.RequestContentType != null) {
                         if (httpContext.Request.ContentType == null || !httpContext.Request.ContentType.Split(";", 2)[0].Equals(page.RequestContentType, StringComparison.CurrentCultureIgnoreCase)) {

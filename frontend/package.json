@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://localhost:3000",
+  "homepage": "https://rgd.steamslab.com",
   "proxy": "http://localhost:35740",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.29",
