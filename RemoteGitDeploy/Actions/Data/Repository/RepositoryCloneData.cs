@@ -7,14 +7,16 @@ namespace RemoteGitDeploy.Actions.Data.Repository {
 
         public readonly long Account;
         public readonly string Git;
+        public readonly string Branch;
         public readonly string Name;
         public readonly string Description;
         public readonly long Team;
 
-        public RepositoryCloneData(long account, string git, string name, string description, long team) {
+        public RepositoryCloneData(long account, string git, string branch, string name, string description, long team) {
             Id = Guid.NewGuid().ToString("N");
             Account = account;
             Git = git;
+            Branch = branch;
             Name = name;
             Description = description;
             Team = team;

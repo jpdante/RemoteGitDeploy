@@ -25,15 +25,18 @@ namespace RemoteGitDeploy.API.Repository {
                 using var reader = new StreamReader(httpContext.Request.Body);
                 string payload = await reader.ReadToEndAsync();
                 if (await IsGithubPushAllowed(payload, eventName, signature, httpContext)) {
-                    var repositoryModel = HtcPlugin.RepositoryManager.GetRepository(repository);
-                    if (repositoryModel == null) {
-                        httpContext.Response.StatusCode = 404;
-                        await httpContext.Response.WriteAsync("Repository not found");
-                        return;
+                    var response = "";
+                    foreach (string repositoryGuid in repository.ToString().Split(";")) {
+                        var repositoryModel = HtcPlugin.RepositoryManager.GetRepository(repositoryGuid);
+                        if (repositoryModel == null) {
+                            response += $"[{repositoryGuid}] Repository not found{Environment.NewLine}";
+                            continue;
+                        }
+                        await HtcPlugin.RepositoryManager.PullRepository(repositoryModel);
+                        response += $"[{repositoryGuid}] Ok{Environment.NewLine}";
                     }
-                    await HtcPlugin.RepositoryManager.PullRepository(repositoryModel);
                     httpContext.Response.StatusCode = 200;
-                    await httpContext.Response.WriteAsync("Ok");
+                    await httpContext.Response.WriteAsync(response);
                 }
             } else await DefaultResponse.FieldsMissing(httpContext);
         }

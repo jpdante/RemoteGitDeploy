@@ -235,13 +235,14 @@ namespace RemoteGitDeploy.Manager {
 
         #region Repository
 
-        public async Task<bool> NewRepositoryAsync(long id, string guid, long creator, string name, string git, long team, string description, MySqlConnection conn) {
-            await using var cmd = new MySqlCommand("INSERT INTO repositories (id, guid, creator, name, git, team, description) VALUES (@id, @guid, @creator, @name, @git, @team, @description);", conn);
+        public async Task<bool> NewRepositoryAsync(long id, string guid, long creator, string name, string git, string branch, long team, string description, MySqlConnection conn) {
+            await using var cmd = new MySqlCommand("INSERT INTO repositories (id, guid, creator, name, git, branch, team, description) VALUES (@id, @guid, @creator, @name, @git, @branch, @team, @description);", conn);
             cmd.Parameters.AddWithValue("id", id);
             cmd.Parameters.AddWithValue("guid", guid);
             cmd.Parameters.AddWithValue("creator", creator);
             cmd.Parameters.AddWithValue("name", name);
             cmd.Parameters.AddWithValue("git", git);
+            cmd.Parameters.AddWithValue("branch", branch);
             cmd.Parameters.AddWithValue("team", team);
             cmd.Parameters.AddWithValue("description", description);
             return await cmd.ExecuteNonQueryAsync() > 0;
@@ -272,7 +273,7 @@ namespace RemoteGitDeploy.Manager {
         }
 
         public async Task<FullRepository> GetFullRepositoryAsync(string guid, MySqlConnection conn) {
-            await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.git, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team WHERE repositories.guid = @guid;", conn);
+            await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.git, repositories.branch, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team WHERE repositories.guid = @guid;", conn);
             cmd.Parameters.AddWithValue("guid", guid);
             await using var reader = await cmd.ExecuteReaderAsync();
             if (!reader.HasRows) return null;
@@ -284,7 +285,7 @@ namespace RemoteGitDeploy.Manager {
 
         public async Task<FullRepository[]> GetFullRepositoriesAsync(MySqlConnection conn) {
             var repositories = new List<FullRepository>();
-            await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.git, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team;", conn);
+            await using var cmd = new MySqlCommand("SELECT repositories.id, repositories.guid, repositories.name, repositories.git, repositories.branch, repositories.description, teams.id, teams.name, teams.description FROM repositories LEFT JOIN teams ON teams.id = repositories.team;", conn);
             await using var reader = await cmd.ExecuteReaderAsync();
             if (!reader.HasRows) return repositories.ToArray();
             while (await reader.ReadAsync()) {

@@ -31,6 +31,8 @@ interface IState {
   loadingTeams: boolean;
   loading: boolean;
   teams: ITeam[];
+  branchs: string[];
+  branch: string;
   requestSent: boolean;
   statusGuid: string;
   git: string;
@@ -49,6 +51,8 @@ class NewRepository extends React.Component<IProps, IState> {
       loadingTeams: false,
       loading: false,
       teams: [],
+      branchs: [],
+      branch: "",
       requestSent: false,
       git: "",
       name: "",
@@ -95,6 +99,36 @@ class NewRepository extends React.Component<IProps, IState> {
     clearInterval(this.state.intervalId);
   }
 
+  reloadBranchs = async (git: string) => {
+    if (!git) {
+      this.setState({ error: "The git URL cannot be empty." });
+      return;
+    }
+    const response = await net.post("/api/get/repositorybranchlist", {
+      git,
+    });
+    if (response.data.success) {
+      if (response.data.branchs.length > 0) {
+        this.setState({
+          branchs: response.data.branchs,
+          branch: response.data.branchs[0],
+          error: "",
+        });
+      } else {
+        this.setState({
+          branchs: response.data.branchs,
+          error: "",
+        });
+      }
+    } else {
+      this.setState({
+        branchs: [],
+        branch: "",
+        error: "Failed to get branches from the git repository, is it a valid git url ?",
+      });
+    }
+  };
+
   timerElapsed = async () => {
     if (!this.state.requestSent) return;
     const { statusGuid } = this.state;
@@ -120,9 +154,13 @@ class NewRepository extends React.Component<IProps, IState> {
   handleSubmit = async (e: any) => {
     e.preventDefault();
     this.setState({ error: "", loading: false });
-    const { git, name, description, team } = this.state;
+    const { git, name, branch, description, team } = this.state;
     if (!git) {
       this.setState({ error: "The git URL cannot be empty." });
+      return;
+    }
+    if (!branch) {
+      this.setState({ error: "The git branch cannot be empty." });
       return;
     }
     if (!name) {
@@ -136,6 +174,7 @@ class NewRepository extends React.Component<IProps, IState> {
     this.setState({ loading: true });
     const response = await net.post("/api/new/repository", {
       git,
+      branch,
       name,
       description,
       team,
@@ -212,9 +251,26 @@ class NewRepository extends React.Component<IProps, IState> {
                         type="text"
                         className="form-control"
                         placeholder="Ex: https://github.com/jpdante/HtcSharp.git"
-                        onChange={(e) => this.setState({ git: e.target.value })}
+                        onChange={(e) => {
+                          this.setState({ git: e.target.value });
+                          this.reloadBranchs(e.target.value);
+                        }}
                         value={this.state.git}
                       />
+                    </div>
+                    <div className="form-group">
+                      <label>Branch</label>
+                      <select
+                        className="form-control"
+                        onChange={(e) =>
+                          this.setState({ branch: e.target.value })
+                        }
+                        value={this.state.branch}
+                      >
+                        {this.state.branchs.map((branch, index) => (
+                          <option key={index}>{branch}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="form-group">
                       <label>Repository name</label>

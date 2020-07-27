@@ -74,7 +74,7 @@ namespace RemoteGitDeploy.Manager {
             await using var conn = await HtcPlugin.DatabaseManager.GetConnectionAsync();
             FullRepository[] repositories = await HtcPlugin.DatabaseManager.GetFullRepositoriesAsync(conn);
             foreach (var repository in repositories) {
-                _repositories.Add(repository.Guid, new Repository(repository.Id, repository.Guid, repository.Name, repository.Git));
+                _repositories.Add(repository.Guid, new Repository(repository.Id, repository.Guid, repository.Name, repository.Git, repository.Branch));
             }
             foreach (KeyValuePair<string, Repository> repository in _repositories) {
                 HtcPlugin.Logger.LogInfo($"Initializing repository {repository.Value.Name} [{repository.Key}]...");
@@ -104,7 +104,7 @@ namespace RemoteGitDeploy.Manager {
         }
 
         public void CreateRepository(RepositoryCloneData repositoryCloneData) {
-            var repositoryClone = new RepositoryClone(repositoryCloneData.Id, repositoryCloneData, repositoryCloneData.Git, Path.Combine(GitRepositoriesDirectory, repositoryCloneData.Id));
+            var repositoryClone = new RepositoryClone(repositoryCloneData.Id, repositoryCloneData, repositoryCloneData.Git, repositoryCloneData.Branch, Path.Combine(GitRepositoriesDirectory, repositoryCloneData.Id));
             repositoryClone.OnFinish += OnActionFinish;
             _queuedActions.Add(repositoryClone);
         }
@@ -143,9 +143,9 @@ namespace RemoteGitDeploy.Manager {
             try {
                 await using var conn = await HtcPlugin.DatabaseManager.GetConnectionAsync();
                 long id = StaticData.IdGenerator.CreateId();
-                action.Success = await HtcPlugin.DatabaseManager.NewRepositoryAsync(id, data.Id, data.Account, data.Name, data.Git, data.Team, data.Description, conn);
+                action.Success = await HtcPlugin.DatabaseManager.NewRepositoryAsync(id, data.Id, data.Account, data.Name, data.Git, data.Branch, data.Team, data.Description, conn);
                 if (action.Success) {
-                    var repository = new Repository(id, data.Id, data.Name, data.Git) {
+                    var repository = new Repository(id, data.Id, data.Name, data.Git, data.Branch) {
                         LastCommit = await GetLocalRepositoryLastCommit(data.Id),
                         LastUpdate = DateTime.UtcNow
                     };
@@ -180,7 +180,7 @@ namespace RemoteGitDeploy.Manager {
                     string actionFile = Path.Combine(GitRepositoriesDirectory, action.RepositoryGuid, ".rgd/run.lua");
                     string repositoryDirectory = Path.Combine(GitRepositoriesDirectory, action.RepositoryGuid);
                     if (File.Exists(Path.Combine(GitRepositoriesDirectory, action.RepositoryGuid, ".rgd/run.lua"))) {
-                        var repositoryAction = new RepositoryAction(repository.Guid, new RepositoryActionData(repository.Guid), actionFile, repositoryDirectory);
+                        var repositoryAction = new RepositoryAction(repository.Guid, repository.Branch, new RepositoryActionData(repository.Guid), actionFile, repositoryDirectory);
                         repositoryAction.OnFinish += OnActionFinish;
                         _queuedActions.Add(repositoryAction);
                     }
@@ -314,16 +314,23 @@ namespace RemoteGitDeploy.Manager {
         }
 
         public static bool BreakGitLink(string link, out string scheme, out string domain, out string path) {
-            if (!Uri.TryCreate(link, UriKind.RelativeOrAbsolute, out var uri)) {
+            try {
+                if (!Uri.TryCreate(link, UriKind.RelativeOrAbsolute, out var uri)) {
+                    scheme = null;
+                    domain = null;
+                    path = null;
+                    return false;
+                }
+                scheme = uri.Scheme;
+                domain = uri.Host;
+                path = uri.AbsolutePath;
+                return true;
+            } catch {
                 scheme = null;
                 domain = null;
                 path = null;
                 return false;
             }
-            scheme = uri.Scheme;
-            domain = uri.Host;
-            path = uri.AbsolutePath;
-            return true;
         }
 
     }

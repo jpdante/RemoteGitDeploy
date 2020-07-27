@@ -15,6 +15,7 @@ namespace RemoteGitDeploy.API.New {
         public async Task OnRequest(HttpContext httpContext) {
             var data = await new JsonData().Load(httpContext);
             if (data.TryGetValue("git", out string git) &&
+                data.TryGetValue("branch", out string branch) &&
                 data.TryGetValue("name", out string name) &&
                 data.TryGetValue("description", out string description) &&
                 data.TryGetValue("team", out string team)) {
@@ -50,7 +51,7 @@ namespace RemoteGitDeploy.API.New {
                     await DefaultResponse.InvalidSession(httpContext);
                     return;
                 }
-                var repositoryCloneData = new RepositoryCloneData(account, git, name, description, teamId);
+                var repositoryCloneData = new RepositoryCloneData(account, git, branch, name, description, teamId);
                 HtcPlugin.RepositoryManager.CreateRepository(repositoryCloneData);
                 httpContext.Response.StatusCode = StatusCodes.Status200OK;
                 await httpContext.Response.WriteAsync(JsonUtils.SerializeObject(new { success = true, status = repositoryCloneData.Id }));

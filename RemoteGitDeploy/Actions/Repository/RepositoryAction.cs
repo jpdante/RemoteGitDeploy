@@ -19,6 +19,7 @@ namespace RemoteGitDeploy.Actions.Repository {
         private Process _process;
 
         public string RepositoryGuid { get; }
+        public string RepositoryBranch { get; }
         public bool Running { get; private set; }
         public bool Success { get; set; }
         public bool InQueue { get; set; }
@@ -30,8 +31,9 @@ namespace RemoteGitDeploy.Actions.Repository {
         public List<OutputLine> Output { get; }
         public IActionData Data { get; }
 
-        public RepositoryAction(string repositoryGuid, IActionData data, string fileName, string directory) {
+        public RepositoryAction(string repositoryGuid, string repositoryBranch, IActionData data, string fileName, string directory) {
             RepositoryGuid = repositoryGuid;
+            RepositoryBranch = repositoryBranch;
             Data = data;
             _filename = fileName;
             _directory = directory;
@@ -97,6 +99,7 @@ namespace RemoteGitDeploy.Actions.Repository {
                 _luaScript.Globals["run"] = runProcess;
                 _luaScript.Globals["runWD"] = runProcessWorkingDirectory;
                 _luaScript.Globals["setStatus"] = setStatus;
+                _luaScript.Globals["branch"] = RepositoryBranch;
                 Task.Run(() => {
                     _luaScript.DoFile(_filename);
                     Running = false;

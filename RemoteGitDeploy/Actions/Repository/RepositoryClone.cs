@@ -11,6 +11,7 @@ namespace RemoteGitDeploy.Actions.Repository {
     public class RepositoryClone : IRepositoryAction {
 
         private readonly string _gitLink;
+        private readonly string _gitBranch;
         private readonly string _directory;
         private Process _process;
 
@@ -26,10 +27,11 @@ namespace RemoteGitDeploy.Actions.Repository {
         public List<OutputLine> Output { get; }
         public IActionData Data { get; }
 
-        public RepositoryClone(string repositoryGuid, IActionData data, string gitLink, string directory) {
+        public RepositoryClone(string repositoryGuid, IActionData data, string gitLink, string gitBranch, string directory) {
             RepositoryGuid = repositoryGuid;
             Data = data;
             _gitLink = gitLink;
+            _gitBranch = gitBranch;
             _directory = directory;
             Running = false;
             Success = false;
@@ -45,7 +47,7 @@ namespace RemoteGitDeploy.Actions.Repository {
                 if (!Directory.Exists(_directory)) Directory.CreateDirectory(_directory);
                 var processStartInfo = new ProcessStartInfo {
                     FileName = "git",
-                    Arguments = $"clone {scheme}://{HtcPlugin.RepositoryManager.GitUsername}:{HtcPlugin.RepositoryManager.GitPersonalAccessToken}@{domain}{path} {_directory}",
+                    Arguments = $"clone -b {_gitBranch} {scheme}://{HtcPlugin.RepositoryManager.GitUsername}:{HtcPlugin.RepositoryManager.GitPersonalAccessToken}@{domain}{path} {_directory}",
                     WorkingDirectory = _directory,
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,

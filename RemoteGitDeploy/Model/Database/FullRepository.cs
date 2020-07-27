@@ -15,6 +15,9 @@ namespace RemoteGitDeploy.Model.Database {
         [JsonProperty("git")]
         public string Git;
 
+        [JsonProperty("branch")]
+        public string Branch;
+
         [JsonProperty("name")]
         public string Name;
 
@@ -36,11 +39,12 @@ namespace RemoteGitDeploy.Model.Database {
             Guid = reader.GetString(1);
             Name = reader.GetString(2);
             Git = reader.GetString(3);
-            Description = reader.GetString(4);
+            Branch = reader.GetString(4);
+            Description = reader.GetString(5);
             Team = new Team(
-                reader.GetInt64(5),
-                reader.GetString(6),
-                reader.GetString(7)
+                reader.GetInt64(6),
+                reader.GetString(7),
+                reader.GetString(8)
             );
         }
     }
