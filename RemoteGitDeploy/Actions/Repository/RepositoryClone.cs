@@ -84,33 +84,49 @@ namespace RemoteGitDeploy.Actions.Repository {
         }
 
         public void ForceKill() {
-            if (_process != null && !_process.HasExited) _process.Kill(true);
-            Running = false;
-            Success = false;
-            ExitTime = DateTime.Now;
-            Output.Add(new OutputLine($"The process was killed by the manager!", (DateTime.Now - StartTime).Milliseconds));
-            OnFinish?.Invoke(this, Data);
+            try {
+                if (_process != null && !_process.HasExited) _process.Kill(true);
+                Running = false;
+                Success = false;
+                ExitTime = DateTime.Now;
+                Output.Add(new OutputLine($"The process was killed by the manager!", (DateTime.Now - StartTime).Milliseconds));
+                OnFinish?.Invoke(this, Data);
+            } catch (Exception ex) {
+                HtcPlugin.Logger.LogError(ex);
+            }
         }
 
         public event IRepositoryAction.OnFinishDelegate OnFinish;
 
         private void ProcessOnExited(object sender, EventArgs e) {
-            Running = false;
-            Success = _process.ExitCode == 0;
-            if (!Success) {
-                Directory.Delete(_directory, true);
+            try {
+                Running = false;
+                Success = _process.ExitCode == 0;
+                if (!Success) {
+                    Directory.Delete(_directory, true);
+                }
+                ExitTime = DateTime.Now;
+                Output.Add(new OutputLine($"The process ended with code: {_process.ExitCode}", (DateTime.Now - StartTime).Milliseconds));
+                OnFinish?.Invoke(this, Data);
+            } catch (Exception ex) {
+                HtcPlugin.Logger.LogError(ex);
             }
-            ExitTime = DateTime.Now;
-            Output.Add(new OutputLine($"The process ended with code: {_process.ExitCode}", (DateTime.Now - StartTime).Milliseconds));
-            OnFinish?.Invoke(this, Data);
         }
 
         private void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e) {
-            Output.Add(new OutputLine(e.Data, (DateTime.Now - StartTime).Milliseconds));
+            try {
+                Output.Add(new OutputLine(e.Data, (DateTime.Now - StartTime).Milliseconds));
+            } catch (Exception ex) {
+                HtcPlugin.Logger.LogError(ex);
+            }
         }
 
         private void ProcessOnOutputDataReceived(object sender, DataReceivedEventArgs e) {
-            Output.Add(new OutputLine(e.Data, (DateTime.Now - StartTime).Milliseconds));
+            try {
+                Output.Add(new OutputLine(e.Data, (DateTime.Now - StartTime).Milliseconds));
+            } catch (Exception ex) {
+                HtcPlugin.Logger.LogError(ex);
+            }
         }
     }
 }

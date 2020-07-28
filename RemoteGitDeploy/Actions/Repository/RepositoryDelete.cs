@@ -54,11 +54,15 @@ namespace RemoteGitDeploy.Actions.Repository {
         }
 
         public void ForceKill() {
-            Running = false;
-            Success = false;
-            ExitTime = DateTime.Now;
-            Output.Add(new OutputLine($"The process was killed by the manager!", (DateTime.Now - StartTime).Milliseconds));
-            OnFinish?.Invoke(this, Data);
+            try {
+                Running = false;
+                Success = false;
+                ExitTime = DateTime.Now;
+                Output.Add(new OutputLine($"The process was killed by the manager!", (DateTime.Now - StartTime).Milliseconds));
+                OnFinish?.Invoke(this, Data);
+            } catch (Exception ex) {
+                HtcPlugin.Logger.LogError(ex);
+            }
         }
 
         public event IRepositoryAction.OnFinishDelegate OnFinish;

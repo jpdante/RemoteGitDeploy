@@ -78,8 +78,8 @@ namespace RemoteGitDeploy.Manager {
             }
             foreach (KeyValuePair<string, Repository> repository in _repositories) {
                 HtcPlugin.Logger.LogInfo($"Initializing repository {repository.Value.Name} [{repository.Key}]...");
-                repository.Value.LastCommit = await GetLocalRepositoryLastCommit(repository.Value.Guid);
-                string lastRemoteCommit = await GetRemoteRepositoryLastCommit(repository.Value.Guid, repository.Value.Git);
+                repository.Value.LastCommit = await GetLocalRepositoryLastCommit(repository.Value.Guid, repository.Value.Branch);
+                string lastRemoteCommit = await GetRemoteRepositoryLastCommit(repository.Value.Guid, repository.Value.Git, repository.Value.Branch);
                 if (!repository.Value.LastCommit.Equals(lastRemoteCommit)) {
                     HtcPlugin.Logger.LogInfo($"Pulling repository {repository.Value.Name} [{repository.Key}]...");
                     var action = new RepositoryPull(repository.Value.Guid, new RepositoryPullData(repository.Value.Guid), Path.Combine(GitRepositoriesDirectory, repository.Value.Guid));
@@ -110,8 +110,8 @@ namespace RemoteGitDeploy.Manager {
         }
 
         public async Task PullRepository(Repository repository) {
-            repository.LastCommit = await GetLocalRepositoryLastCommit(repository.Guid);
-            string lastRemoteCommit = await GetRemoteRepositoryLastCommit(repository.Guid, repository.Git);
+            repository.LastCommit = await GetLocalRepositoryLastCommit(repository.Guid, repository.Branch);
+            string lastRemoteCommit = await GetRemoteRepositoryLastCommit(repository.Guid, repository.Git, repository.Branch);
             if (!repository.LastCommit.Equals(lastRemoteCommit)) {
                 var action = new RepositoryPull(repository.Guid, new RepositoryPullData(repository.Guid), Path.Combine(GitRepositoriesDirectory, repository.Guid));
                 action.OnFinish += OnActionFinish;
@@ -146,7 +146,7 @@ namespace RemoteGitDeploy.Manager {
                 action.Success = await HtcPlugin.DatabaseManager.NewRepositoryAsync(id, data.Id, data.Account, data.Name, data.Git, data.Branch, data.Team, data.Description, conn);
                 if (action.Success) {
                     var repository = new Repository(id, data.Id, data.Name, data.Git, data.Branch) {
-                        LastCommit = await GetLocalRepositoryLastCommit(data.Id),
+                        LastCommit = await GetLocalRepositoryLastCommit(data.Id, data.Branch),
                         LastUpdate = DateTime.UtcNow
                     };
                     _repositories.Add(data.Id, repository);
@@ -164,7 +164,7 @@ namespace RemoteGitDeploy.Manager {
         private async Task PullRepository(IRepositoryAction action, RepositoryPullData data) {
             try {
                 if (_repositories.TryGetValue(data.RepositoryGuid, out var repository)) {
-                    repository.LastCommit = await GetLocalRepositoryLastCommit(repository.Guid);
+                    repository.LastCommit = await GetLocalRepositoryLastCommit(repository.Guid, repository.Branch);
                     repository.LastUpdate = DateTime.UtcNow;
                     await using var conn = await HtcPlugin.DatabaseManager.GetConnectionAsync();
                     var parameters = new List<RepositoryHistory.Parameter>();
@@ -236,11 +236,11 @@ namespace RemoteGitDeploy.Manager {
             }
         }
 
-        public async Task<string> GetLocalRepositoryLastCommit(string guid) {
+        public async Task<string> GetLocalRepositoryLastCommit(string guid, string branch) {
             try {
                 var processStartInfo = new ProcessStartInfo {
                     FileName = "git",
-                    Arguments = "rev-parse HEAD",
+                    Arguments = $"rev-parse {branch}",
                     WorkingDirectory = Path.Combine(GitRepositoriesDirectory, guid),
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
@@ -258,12 +258,12 @@ namespace RemoteGitDeploy.Manager {
             }
         }
 
-        public async Task<string> GetRemoteRepositoryLastCommit(string guid, string gitLink) {
+        public async Task<string> GetRemoteRepositoryLastCommit(string guid, string gitLink, string branch) {
             if (!BreakGitLink(gitLink, out string scheme, out string domain, out string path)) return null;
             try {
                 var processStartInfo = new ProcessStartInfo {
                     FileName = "git",
-                    Arguments = $"ls-remote {scheme}://{GitUsername}:{GitPersonalAccessToken}@{domain}{path} HEAD",
+                    Arguments = $"ls-remote {scheme}://{GitUsername}:{GitPersonalAccessToken}@{domain}{path} {branch}",
                     WorkingDirectory = Path.Combine(GitRepositoriesDirectory, guid),
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
