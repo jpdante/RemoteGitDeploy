@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using Newtonsoft.Json;
-using RemoteGitDeploy.Utils;
 
 namespace RemoteGitDeploy.Model.Database {
     public class ActionHistory {
@@ -43,7 +42,7 @@ namespace RemoteGitDeploy.Model.Database {
             RepositoryId = reader.GetInt64(2);
             RepositoryIdString = RepositoryId.ToString();
             Name = reader.GetString(3);
-            Date = StaticData.IdGenerator.FromId(Id).DateTimeOffset.DateTime.ToString("dd/MM/yyyy HH:mm:ss");
+            Date = Security.IdGen.FromId(Id).DateTimeOffset.DateTime.ToString("dd/MM/yyyy HH:mm:ss");
             Parameters = JsonConvert.DeserializeObject<List<Parameter>>(reader.GetString(4));
             Logs = JsonConvert.DeserializeObject<List<OutputLine>>(reader.GetString(5));
             Success = reader.GetBoolean(6);

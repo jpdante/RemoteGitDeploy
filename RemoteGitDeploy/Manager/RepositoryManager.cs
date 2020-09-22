@@ -69,7 +69,7 @@ namespace RemoteGitDeploy.Manager {
         public Repository GetRepository(string guid) => _repositories.TryGetValue(guid, out var repository) ? repository : null;
 
         public async Task Start() {
-            _timer.Start();
+            /*_timer.Start();
             _repositories.Clear();
             await using var conn = await HtcPlugin.DatabaseManager.GetConnectionAsync();
             FullRepository[] repositories = await HtcPlugin.DatabaseManager.GetFullRepositoriesAsync(conn);
@@ -88,7 +88,7 @@ namespace RemoteGitDeploy.Manager {
                     action.Start();
                 }
                 repository.Value.LastUpdate = DateTime.UtcNow;
-            }
+            }*/
         }
 
         public void Stop() {
@@ -140,7 +140,7 @@ namespace RemoteGitDeploy.Manager {
         }
 
         private async Task CreateRepository(IRepositoryAction action, RepositoryCloneData data) {
-            try {
+            /*try {
                 await using var conn = await HtcPlugin.DatabaseManager.GetConnectionAsync();
                 long id = StaticData.IdGenerator.CreateId();
                 action.Success = await HtcPlugin.DatabaseManager.NewRepositoryAsync(id, data.Id, data.Account, data.Name, data.Git, data.Branch, data.Team, data.Description, conn);
@@ -158,11 +158,11 @@ namespace RemoteGitDeploy.Manager {
                 HtcPlugin.Logger.LogError(ex);
                 action.Success = false;
                 action.Finished = true;
-            }
+            }*/
         }
 
         private async Task PullRepository(IRepositoryAction action, RepositoryPullData data) {
-            try {
+            /*try {
                 if (_repositories.TryGetValue(data.RepositoryGuid, out var repository)) {
                     repository.LastCommit = await GetLocalRepositoryLastCommit(repository.Guid, repository.Branch);
                     repository.LastUpdate = DateTime.UtcNow;
@@ -192,11 +192,11 @@ namespace RemoteGitDeploy.Manager {
                 HtcPlugin.Logger.LogError(ex);
                 action.Success = false;
                 action.Finished = true;
-            }
+            }*/
         }
 
         public async Task RunRepositoryAction(IRepositoryAction action, RepositoryActionData data) {
-            try {
+            /*try {
                 if (_repositories.TryGetValue(data.RepositoryGuid, out var repository)) {
                     repository.LastUpdate = DateTime.UtcNow;
                     await using var conn = await HtcPlugin.DatabaseManager.GetConnectionAsync();
@@ -218,11 +218,11 @@ namespace RemoteGitDeploy.Manager {
                 HtcPlugin.Logger.LogError(ex);
                 action.Success = false;
                 action.Finished = true;
-            }
+            }*/
         }
 
         private async Task DeleteRepository(IRepositoryAction action, RepositoryDeleteData data) {
-            try {
+            /*try {
                 if (_repositories.TryGetValue(data.RepositoryGuid, out var repository)) {
                     await using var conn = await HtcPlugin.DatabaseManager.GetConnectionAsync();
                     if (await HtcPlugin.DatabaseManager.DeleteRepositoryAsync(repository.Id, conn)) {
@@ -233,7 +233,7 @@ namespace RemoteGitDeploy.Manager {
                 HtcPlugin.Logger.LogError(ex);
                 action.Success = false;
                 action.Finished = true;
-            }
+            }*/
         }
 
         public async Task<string> GetLocalRepositoryLastCommit(string guid, string branch) {

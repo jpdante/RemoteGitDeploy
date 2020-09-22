@@ -39,7 +39,7 @@ namespace RemoteGitDeploy.Model.Database {
             RepositoryIdString = RepositoryId.ToString();
             Icon = reader.GetInt32(2);
             Name = reader.GetString(3);
-            Date = StaticData.IdGenerator.FromId(Id).DateTimeOffset.DateTime.ToString("dd/MM/yyyy HH:mm:ss");
+            Date = Security.IdGen.FromId(Id).DateTimeOffset.DateTime.ToString("dd/MM/yyyy HH:mm:ss");
             Parameters = JsonConvert.DeserializeObject<List<Parameter>>(reader.GetString(4));
         }
 

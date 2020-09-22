@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using HtcSharp.Core.Logging.Abstractions;
 using HtcSharp.Core.Plugin;
@@ -11,10 +14,11 @@ using HtcSharp.HttpModule;
 using HtcSharp.HttpModule.Http.Abstractions;
 using HtcSharp.HttpModule.Routing;
 using Newtonsoft.Json.Linq;
-using RemoteGitDeploy.API;
+using RemoteGitDeploy.Core;
+using RemoteGitDeploy.Extensions;
 using RemoteGitDeploy.Manager;
-using RemoteGitDeploy.Security;
-using RemoteGitDeploy.Utils;
+using RemoteGitDeploy.Mvc;
+using StackExchange.Redis;
 
 namespace RemoteGitDeploy {
     public class HtcPlugin : IPlugin, IHttpEvents {
@@ -22,32 +26,34 @@ namespace RemoteGitDeploy {
         public string Name => "RemoteGitDeploy";
         public string Version => RemoteGitDeploy.Version.GetVersion();
 
+        private Dictionary<string, (HttpMethodAttribute, bool, Type, MethodInfo)> _routes;
+
         internal static PluginServerContext PluginServerContext;
         internal static RepositoryManager RepositoryManager;
-        internal static DatabaseManager DatabaseManager;
-        internal static CacheManager CacheManager;
+        internal static ConnectionMultiplexer RedisConnection;
+        internal static IDatabase Redis;
         internal static ILogger Logger;
-        internal static List<IAPI> ApiPages;
         internal static string Domain { get; private set; }
         internal static string DevKey { get; private set; }
         internal static string RepositorySecreteKey { get; private set; }
 
-        public Task Load(PluginServerContext pluginServerContext, ILogger logger) {
+        public async Task Load(PluginServerContext pluginServerContext, ILogger logger) {
             PluginServerContext = pluginServerContext;
             Logger = logger;
             string path = Path.Combine(PluginServerContext.PluginsPath, "RemoteGitDeploy.json");
             if (!File.Exists(path)) {
-                using var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-                using var streamWriter = new StreamWriter(fileStream);
-                streamWriter.Write(JsonUtils.SerializeObject(new {
+                await using var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+                await using var streamWriter = new StreamWriter(fileStream);
+                await streamWriter.WriteAsync(JsonUtils.SerializeObject(new {
                     Domain = "some-domain.com",
-                    CacheString = "localhost",
+                    RedisString = "localhost",
+                    RedisDatabase = 0,
                     DatabaseString = "Server=127.0.0.1;Port=3306;Database=remotegitdeploy;Uid=root;Pwd=root;",
                     GitUsername = "username",
                     GitPersonalAccessToken = "token",
                     GitRepositoriesDirectory = "./RemoteGitDeploy/",
-                    DevKey = SessionGenerator.Create(),
-                    RepositorySecreteKey = SessionGenerator.Create(),
+                    DevKey = Guid.NewGuid().ToString("N"),
+                    RepositorySecreteKey = Guid.NewGuid().ToString("N"),
                 }, true));
             }
             var config = JsonUtils.GetJsonFile(path);
@@ -61,83 +67,101 @@ namespace RemoteGitDeploy {
             var gitRepositoriesDirectory = config.GetValue("GitRepositoriesDirectory", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
             RepositoryManager = new RepositoryManager(gitUsername, gitPersonalAccessToken, gitRepositoriesDirectory);
 
-            var cacheString = config.GetValue("CacheString", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
-            CacheManager = new CacheManager(cacheString);
+            var redisString = config.GetValue("RedisString", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
+            RedisConnection = await ConnectionMultiplexer.ConnectAsync(redisString);
+
+            var redisDatabase = config.GetValue("RedisDatabase", StringComparison.CurrentCultureIgnoreCase)!.Value<int>();
+            Redis = RedisConnection.GetDatabase(redisDatabase);
 
             var databaseString = config.GetValue("DatabaseString", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
-            DatabaseManager = new DatabaseManager(databaseString);
+            RgdContext.SetConnectionString(databaseString);
 
-            return Task.CompletedTask;
+            LoadControllers();
         }
 
         public async Task Enable() {
-            await CacheManager.ConnectAsync();
-            ApiPages = new List<IAPI>();
-            var interfaceType = typeof(IAPI);
-            IEnumerable<Type> types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(s => s.GetTypes()).Where(p => interfaceType.IsAssignableFrom(p));
-            foreach (var type in types) {
-                if (type.IsInterface || type.IsAbstract) continue;
-                var page = (IAPI)Activator.CreateInstance(type);
-                ApiPages.Add(page);
-                UrlMapper.RegisterPluginPage(page.FileName, this);
-            }
             await RepositoryManager.Start();
         }
 
-        public async Task Disable() {
-            foreach (var page in ApiPages) {
-                UrlMapper.UnRegisterPluginPage(page.FileName);
-            }
-            ApiPages.Clear();
-            await CacheManager.DisconnectAsync();
+        public Task Disable() {
             RepositoryManager.Stop();
+            return Task.CompletedTask;
         }
 
         public bool IsCompatible(int htcMajor, int htcMinor, int htcPatch) {
             return true;
         }
 
+        private void LoadControllers() {
+            _routes = new Dictionary<string, (HttpMethodAttribute, bool, Type, MethodInfo)>();
+            MethodInfo[] methods = Assembly.GetExecutingAssembly().GetTypes()
+                .SelectMany(t => t.GetMethods())
+                .Where(m => m.GetCustomAttributes(typeof(HttpMethodAttribute), false).Length > 0)
+                .ToArray();
+            foreach (var method in methods) {
+                if (method.ReturnType != typeof(Task) || !method.IsStatic) continue;
+                ParameterInfo[] parameters = method.GetParameters();
+                var attribute = method.GetCustomAttributes(typeof(HttpMethodAttribute), false).First() as HttpMethodAttribute;
+                if (attribute == null) continue;
+                if (parameters.Length < 1 || parameters[0].ParameterType != typeof(HttpContext)) continue;
+                if (parameters.Length == 2 && !parameters[1].ParameterType.GetInterfaces().Contains(typeof(IHttpJsonObject))) continue;
+                Logger.LogInfo(parameters.Length == 2 ? $"Registering route: {attribute.Path}, JsonObject" : $"Registering route: {attribute.Path}");
+                _routes.Add(attribute.Path, (attribute, parameters.Length == 2, parameters.Length == 2 ? parameters[1].ParameterType : null, method));
+                UrlMapper.RegisterPluginPage(attribute.Path, this);
+            }
+        }
+
         public async Task OnHttpPageRequest(HttpContext httpContext, string filename) {
             try {
-                if (filename == null) {
-                    await DefaultResponse.InternalError(httpContext);
-                    return;
-                }
-                //if (!httpContext.Request.Host.ToString().Equals(Domain)) return;
-                foreach (var page in ApiPages.Where(page => filename.Equals(page.FileName))) {
-                    //Logger.LogDebug($"{httpContext.Request.Method} {filename}");
-                    if (!httpContext.Request.Method.Equals(page.RequestMethod, StringComparison.CurrentCultureIgnoreCase)) continue;
-                    if (page.RequestContentType != null) {
-                        if (httpContext.Request.ContentType == null || !httpContext.Request.ContentType.Split(";", 2)[0].Equals(page.RequestContentType, StringComparison.CurrentCultureIgnoreCase)) {
-                            await DefaultResponse.InvalidContentType(httpContext, httpContext.Request.ContentType);
-                            return;
-                        }
-                    }
-                    if (page.NeedAuthentication) {
+                if (_routes.TryGetValue(filename, out var value)) {
+                    if (httpContext.Request.Method.Equals(value.Item1.Method)) {
                         httpContext.Session = new Session(httpContext);
                         await httpContext.Session.LoadAsync();
-                        if (!httpContext.Session.IsAvailable) {
-                            await DefaultResponse.InvalidSession(httpContext);
+                        if (value.Item1.RequireSession && !httpContext.Session.IsAvailable) {
+                            await httpContext.Response.SendRequestErrorAsync(403, "Invalid or non-existent session.");
                             return;
                         }
+
+                        if (value.Item1.RequireContentType != null) {
+                            if (httpContext.Request.ContentType == null || httpContext.Request.ContentType.Split(";")[0] != value.Item1.RequireContentType) {
+                                await httpContext.Response.SendRequestErrorAsync(415, "Content-Type invalid or not recognized.");
+                                return;
+                            }
+                        }
+
+                        try {
+                            object[] data = null;
+                            if (value.Item2) {
+                                using var streamReader = new StreamReader(httpContext.Request.Body, Encoding.UTF8);
+                                if (JsonConvertExt.TryDeserializeObject(await streamReader.ReadToEndAsync(), value.Item3, out var obj)) {
+                                    if (obj is IHttpJsonObject httpJsonObject && await httpJsonObject.ValidateData(httpContext)) 
+                                        data = new object[] { httpContext, obj };
+                                    else {
+                                        if (!httpContext.Response.HasStarted) await httpContext.Response.SendDecodeErrorAsync();
+                                        return;
+                                    }
+                                } else {
+                                    await httpContext.Response.SendDecodeErrorAsync();
+                                }
+                                streamReader.Close();
+                            } else {
+                                data = new object[] { httpContext };
+                            }
+                            // ReSharper disable once PossibleNullReferenceException
+                            await (Task)value.Item4.Invoke(null, data);
+                        } catch (Exception ex) {
+                            if (!httpContext.Response.HasStarted) {
+                                var guid = Guid.NewGuid();
+                                Logger.LogError(guid, ex);
+                                await httpContext.Response.SendInternalErrorAsync(500, $"[{guid}] An internal failure occurred. Please try again later.");
+                            }
+                        }
+                    } else {
+                        await httpContext.Response.SendInvalidRequestMethodErrorAsync(value.Item1.Method);
                     }
-                    httpContext.Response.ContentType = ContentType.JSON.ToValue();
-                    httpContext.Response.StatusCode = StatusCodes.Status200OK;
-                    await page.OnRequest(httpContext);
-                    return;
-                }
-                if (!httpContext.Response.HasStarted) {
-                    await DefaultResponse.UnknownApi(httpContext, filename);
                 }
             } catch (Exception ex) {
-                if (!httpContext.Response.HasStarted) {
-                    await DefaultResponse.InternalError(httpContext);
-                }
-#if DEBUG
-                Logger.LogTrace($"Failed to process request [{httpContext.Connection.Id}] {ex.Message}\n{ex.StackTrace}", ex);
-#else
-                Logger.LogError($"Failed to process request [{httpContext.Connection.Id}]", ex);
-#endif
+                Logger.LogError(ex);
             }
         }
 

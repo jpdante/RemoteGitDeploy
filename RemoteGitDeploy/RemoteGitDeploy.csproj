@@ -9,19 +9,27 @@
 
   <ItemGroup>
     <PackageReference Include="IdGen" Version="3.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Primitives" Version="3.1.5" />
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="1.2.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="3.1.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Primitives" Version="3.1.8" />
     <PackageReference Include="MoonSharp" Version="2.0.0" />
-    <PackageReference Include="MySqlConnector" Version="0.69.6" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.0" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql.Design" Version="1.1.2" />
     <PackageReference Include="StackExchange.Redis" Version="2.1.58" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="HtcSharp.Core">
-      <HintPath>..\..\..\..\Documents\GitHub\HtcSharp\HtcSharp.Core\bin\x64\Debug\HtcSharp.Core.dll</HintPath>
+      <HintPath>..\HtcSharp\HtcSharp.Core.dll</HintPath>
     </Reference>
     <Reference Include="HtcSharp.HttpModule.module">
-      <HintPath>..\..\..\..\Documents\GitHub\HtcSharp\Modules\HtcSharp.HttpModule\bin\x64\Debug\netcoreapp3.1\HtcSharp.HttpModule.module.dll</HintPath>
+      <HintPath>..\HtcSharp\modules\http-module\HtcSharp.HttpModule.module.dll</HintPath>
     </Reference>
   </ItemGroup>
 
