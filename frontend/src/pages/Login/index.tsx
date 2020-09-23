@@ -7,7 +7,7 @@ import styles from "./login.module.scss";
 import net from "../../services/net";
 
 interface IState {
-  email: string;
+  username: string;
   password: string;
   rememberMe: boolean;
   error: string;
@@ -18,7 +18,7 @@ class Login extends React.Component<StoreProps, IState> {
   constructor(props: StoreProps) {
     super(props);
     this.state = {
-      email: "",
+      username: "",
       password: "",
       rememberMe: false,
       error: "",
@@ -32,8 +32,8 @@ class Login extends React.Component<StoreProps, IState> {
       error: "",
       loading: false,
     });
-    const { email, password, rememberMe } = this.state;
-    if (!email) {
+    const { username, password, rememberMe } = this.state;
+    if (!username) {
       this.setState({ error: "errors.emailEmpty" });
       return;
     }
@@ -41,32 +41,39 @@ class Login extends React.Component<StoreProps, IState> {
       this.setState({ error: "errors.passwordEmpty" });
       return;
     }
-    try {
-      this.setState({ loading: true });
-      const response = await net.post("/auth/login", {
-        email,
+    this.setState({ loading: true });
+    await net
+      .post("/api/auth/login", {
+        username,
         password,
-        rememberMe
+        rememberMe,
+      })
+      .then((response) => {
+        console.error(response);
+        if (!response.data) return;
+        if (response.data.error) {
+          this.setState({
+            error: response.data.error.message,
+          });
+        } else {
+          const { auth, profile } = this.props;
+          profile.set("username")(response.data.account.username);
+          profile.set("email")(response.data.account.email);
+          auth.set("token")(response.data.token);
+          navigate("/dashboard");
+        }
+      })
+      .catch((reason) => {
+        if (
+          reason.response &&
+          reason.response.data &&
+          reason.response.data.error
+        ) {
+          this.setState({
+            error: reason.response.data.error.message,
+          });
+        }
       });
-      this.setState({ loading: false });
-      if (response.data.success) {
-        const { auth, profile } = this.props;
-        profile.set("username")(response.data.account.username);
-        profile.set("email")(email);
-        auth.set("token")(response.data.token);
-        navigate("/dashboard");
-      } else {
-        this.setState({
-          error: response.data.message,
-        });
-      }
-    } catch (err) {
-      console.debug(err);
-      this.setState({
-        loading: false,
-        error: "An error occurred while logging in.",
-      });
-    }
   };
 
   render() {
@@ -91,18 +98,18 @@ class Login extends React.Component<StoreProps, IState> {
             </div>
           )}
           <label htmlFor="inputEmail" className="sr-only">
-            Email address
+            Username
           </label>
           <input
-            type="email"
+            type="text"
             id="inputEmail"
             className={`form-control ${styles.formControl}`}
             placeholder="Email address"
             required
             autoFocus
             autoComplete="email"
-            onChange={(e) => this.setState({ email: e.target.value })}
-            value={this.state.email}
+            onChange={(e) => this.setState({ username: e.target.value })}
+            value={this.state.username}
           />
           <label htmlFor="inputPassword" className="sr-only">
             Password

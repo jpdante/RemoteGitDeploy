@@ -9,7 +9,7 @@ function UserBar() {
   const { auth, profile } = Store.useStores();
 
   async function logout() {
-    await net.get("/auth/logout");
+    await net.get("/api/auth/logout");
     auth.set("token")(null);
   }
 

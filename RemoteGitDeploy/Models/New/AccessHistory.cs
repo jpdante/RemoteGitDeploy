@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
-namespace RemoteGitDeploy.Model.New {
+namespace RemoteGitDeploy.Models.New {
     public class AccessHistory {
 
         [Key]
@@ -21,6 +19,13 @@ namespace RemoteGitDeploy.Model.New {
         [Required]
         [Column(TypeName = "TIMESTAMP")]
         public DateTime AccessDate { get; set; }
+
+        public AccessHistory(long accountId, string ip) {
+            Id = Security.IdGen.GetId();
+            AccountId = accountId;
+            Ip = ip;
+            AccessDate = DateTime.UtcNow;
+        }
 
     }
 }

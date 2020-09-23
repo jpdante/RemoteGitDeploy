@@ -71,23 +71,49 @@ class NewRepository extends React.Component<IProps, IState> {
 
   async componentWillMount() {
     this.setState({ loadingTeams: true });
-    const response = await net.get("/api/get/teams");
-    if (response.data.success) {
-      if (response.data.teams.length > 0) {
-        this.setState({
-          loadingTeams: false,
-          teams: response.data.teams,
-          team: response.data.teams[0].name,
-        });
-      } else {
-        this.setState({
-          loadingTeams: false,
-          teams: response.data.teams,
-        });
-      }
-    } else {
-      this.setState({ loadingTeams: false });
-    }
+    await net
+      .get("/api/team/get")
+      .then((response) => {
+        if (response.data) {
+          if (response.data.error) {
+            this.setState({
+              loading: false,
+              loadingTeams: false,
+              error: response.data.error.message,
+            });
+            return;
+          }
+          if (response.data.success) {
+            if (response.data.teams.length > 0) {
+              this.setState({
+                loading: false,
+                loadingTeams: false,
+                teams: response.data.teams,
+                team: response.data.teams[0].name,
+              });
+            } else {
+              this.setState({
+                loading: false,
+                loadingTeams: false,
+                error:
+                  "No teams were found, please create a team before creating a repository.",
+              });
+            }
+          }
+        }
+      })
+      .catch((reason) => {
+        if (
+          reason.response &&
+          reason.response.data &&
+          reason.response.data.error
+        ) {
+          this.setState({
+            loading: false,
+            error: reason.response.data.error.message,
+          });
+        }
+      });
   }
 
   componentDidMount() {
@@ -124,7 +150,8 @@ class NewRepository extends React.Component<IProps, IState> {
       this.setState({
         branchs: [],
         branch: "",
-        error: "Failed to get branches from the git repository, is it a valid git url ?",
+        error:
+          "Failed to get branches from the git repository, is it a valid git url ?",
       });
     }
   };

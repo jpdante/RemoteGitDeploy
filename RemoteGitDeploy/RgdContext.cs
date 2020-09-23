@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using RemoteGitDeploy.Model.New;
+using RemoteGitDeploy.Models.New;
 
 namespace RemoteGitDeploy {
     public class RgdContext : DbContext {

@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
-namespace RemoteGitDeploy.Model {
+namespace RemoteGitDeploy.Models {
     public class OutputLine {
 
         [JsonProperty("data")]

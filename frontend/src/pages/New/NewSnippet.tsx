@@ -57,27 +57,38 @@ class NewSnippet extends React.Component<IProps, IState> {
       }
     });
     if (fileError) return;
-    try {
-      this.setState({ loading: true });
-      const response = await net.post("/api/new/snippet", {
+    this.setState({ loading: true });
+    await net
+      .post("/api/snippet/new", {
         description,
         files,
+      })
+      .then((response) => {
+        if (response.data) {
+          if (response.data.error) {
+            this.setState({
+              loading: false,
+              error: response.data.error.message,
+            });
+            return;
+          }
+          if (response.data.success) {
+            navigate("/snippet/" + response.data.guid);
+          }
+        }
+      })
+      .catch((reason) => {
+        if (
+          reason.response &&
+          reason.response.data &&
+          reason.response.data.error
+        ) {
+          this.setState({
+            loading: false,
+            error: reason.response.data.error.message,
+          });
+        }
       });
-      this.setState({ loading: false });
-      if (response.data.success) {
-        navigate("/snippet/" + response.data.guid);
-      } else {
-        this.setState({
-          error: response.data.message,
-        });
-      }
-    } catch (err) {
-      console.debug(err);
-      this.setState({
-        loading: false,
-        error: "An error occurred while uploading.",
-      });
-    }
   };
 
   handleRemoveFile = async (id: number) => {

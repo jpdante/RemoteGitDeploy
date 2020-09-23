@@ -13,7 +13,9 @@ using HtcSharp.Core.Utils;
 using HtcSharp.HttpModule;
 using HtcSharp.HttpModule.Http.Abstractions;
 using HtcSharp.HttpModule.Routing;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using RemoteGitDeploy.Core;
 using RemoteGitDeploy.Extensions;
 using RemoteGitDeploy.Manager;
@@ -40,6 +42,11 @@ namespace RemoteGitDeploy {
         public async Task Load(PluginServerContext pluginServerContext, ILogger logger) {
             PluginServerContext = pluginServerContext;
             Logger = logger;
+
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            };
+
             string path = Path.Combine(PluginServerContext.PluginsPath, "RemoteGitDeploy.json");
             if (!File.Exists(path)) {
                 await using var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
@@ -134,7 +141,7 @@ namespace RemoteGitDeploy {
                             if (value.Item2) {
                                 using var streamReader = new StreamReader(httpContext.Request.Body, Encoding.UTF8);
                                 if (JsonConvertExt.TryDeserializeObject(await streamReader.ReadToEndAsync(), value.Item3, out var obj)) {
-                                    if (obj is IHttpJsonObject httpJsonObject && await httpJsonObject.ValidateData(httpContext)) 
+                                    if (obj is IHttpJsonObject httpJsonObject && await httpJsonObject.ValidateData(httpContext))
                                         data = new object[] { httpContext, obj };
                                     else {
                                         if (!httpContext.Response.HasStarted) await httpContext.Response.SendDecodeErrorAsync();
@@ -143,12 +150,16 @@ namespace RemoteGitDeploy {
                                 } else {
                                     await httpContext.Response.SendDecodeErrorAsync();
                                 }
+
                                 streamReader.Close();
                             } else {
                                 data = new object[] { httpContext };
                             }
+
                             // ReSharper disable once PossibleNullReferenceException
                             await (Task)value.Item4.Invoke(null, data);
+                        } catch (HttpException ex) {
+                            await httpContext.Response.SendErrorAsync(ex.Status, ex.Message);
                         } catch (Exception ex) {
                             if (!httpContext.Response.HasStarted) {
                                 var guid = Guid.NewGuid();

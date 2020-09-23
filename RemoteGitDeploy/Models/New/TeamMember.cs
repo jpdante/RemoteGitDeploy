@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace RemoteGitDeploy.Model.New {
+namespace RemoteGitDeploy.Models.New {
     public class TeamMember {
 
         [Key]

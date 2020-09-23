@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using HtcSharp.Core.Logging.Abstractions;
 using RemoteGitDeploy.Actions.Data;
-using RemoteGitDeploy.Model;
+using RemoteGitDeploy.Models;
 
 namespace RemoteGitDeploy.Actions.Repository {
     public class RepositoryDelete : IRepositoryAction {

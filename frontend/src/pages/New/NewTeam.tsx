@@ -33,22 +33,34 @@ class NewTeam extends React.Component<IProps, IState> {
       return;
     }
     this.setState({ loading: true });
-    const response = await net.post("/api/new/team", {
+    await net.post("/api/team/new", {
       name,
       description,
+    }).then((response) => {
+      if (response.data) {
+        if(response.data.error) {
+          this.setState({
+            loading: false,
+            error: response.data.error.message,
+          });
+          return;
+        }
+        if(response.data.success) {
+          this.setState({
+            loading: false,
+            error: "",
+          });
+          navigate("/team/" + name);
+        }
+      }
+    }).catch((reason) => {
+      if(reason.response && reason.response.data && reason.response.data.error) {
+        this.setState({
+          loading: false,
+          error: reason.response.data.error.message,
+        });
+      }
     });
-    if (response.data.success) {
-      this.setState({
-        loading: false,
-        error: "",
-      });
-      navigate("/team/" + name);
-    } else {
-      this.setState({
-        loading: false,
-        error: response.data.message,
-      });
-    }
   };
 
   render() {

@@ -44,5 +44,13 @@ namespace RemoteGitDeploy.Security {
             };
             return await argon2.GetBytesAsync(16);
         }
+
+        private static readonly Random Random = new Random();
+
+        public static string RandomPassword(int length) {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@!#$%&*/\\-+";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[Random.Next(s.Length)]).ToArray());
+        }
     }
 }

@@ -36,5 +36,9 @@ namespace RemoteGitDeploy.Extensions {
             await httpResponse.WriteAsync($"{{\"error\":{{\"code\":400,\"message\":\"Failed to decode request data.\"}}}}");
         }
 
+        public static async Task SendErrorAsync(this HttpResponse httpResponse, int status, string message) {
+            httpResponse.StatusCode = status;
+            await httpResponse.WriteAsync($"{{\"error\":{{\"code\":{status},\"message\":\"{message}\"}}}}");
+        }
     }
 }

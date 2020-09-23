@@ -7,7 +7,7 @@ using HtcSharp.Core.Logging.Abstractions;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Loaders;
 using RemoteGitDeploy.Actions.Data;
-using RemoteGitDeploy.Model;
+using RemoteGitDeploy.Models;
 
 namespace RemoteGitDeploy.Actions.Repository {
     public class RepositoryAction : IRepositoryAction {

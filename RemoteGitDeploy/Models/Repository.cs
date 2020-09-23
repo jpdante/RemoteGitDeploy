@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace RemoteGitDeploy.Model {
+namespace RemoteGitDeploy.Models {
     public class Repository {
 
         public long Id { get; }

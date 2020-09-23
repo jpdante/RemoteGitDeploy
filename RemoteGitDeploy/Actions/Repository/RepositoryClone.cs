@@ -5,7 +5,7 @@ using System.IO;
 using HtcSharp.Core.Logging.Abstractions;
 using RemoteGitDeploy.Actions.Data;
 using RemoteGitDeploy.Manager;
-using RemoteGitDeploy.Model;
+using RemoteGitDeploy.Models;
 
 namespace RemoteGitDeploy.Actions.Repository {
     public class RepositoryClone : IRepositoryAction {

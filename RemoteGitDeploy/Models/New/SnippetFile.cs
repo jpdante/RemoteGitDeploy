@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
-namespace RemoteGitDeploy.Model.New {
+namespace RemoteGitDeploy.Models.New {
     public class SnippetFile {
 
         [Key]
@@ -28,6 +26,15 @@ namespace RemoteGitDeploy.Model.New {
         [Required]
         [Column(TypeName = "TIMESTAMP")]
         public DateTime CreationDate { get; set; }
+
+        public SnippetFile(long snippetId, string filename, string content, string language) {
+            Id = Security.IdGen.GetId();
+            SnippetId = snippetId;
+            Filename = filename;
+            Content = content;
+            Language = language;
+            CreationDate = DateTime.UtcNow;
+        }
 
     }
 }

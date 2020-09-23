@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using RemoteGitDeploy.Actions.Data;
-using RemoteGitDeploy.Model;
+using RemoteGitDeploy.Models;
 
 namespace RemoteGitDeploy.Actions.Repository {
     public interface IRepositoryAction {

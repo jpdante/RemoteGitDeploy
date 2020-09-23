@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
+using System.Security.Cryptography;
 
-namespace RemoteGitDeploy.Model.New {
-    public class Repository {
+namespace RemoteGitDeploy.Models.New {
+    public class Team {
 
         [Key]
         public long Id { get; set; }
@@ -22,22 +21,21 @@ namespace RemoteGitDeploy.Model.New {
         [MaxLength(64)]
         public string Name { get; set; }
 
-        [Required]
-        [MaxLength(255)]
-        public string Git { get; set; }
-
-        [Required]
-        [MaxLength(64)]
-        public string Branch { get; set; }
-
-        public long TeamId { get; set; }
-        public Team Team { get; set; }
-
         [MaxLength(10000)]
         public string Description { get; set; }
 
         [Required]
         [Column(TypeName = "TIMESTAMP")]
         public DateTime CreationDate { get; set; }
+
+        public Team(long creatorId, string name, string description) {
+            Id = Security.IdGen.GetId();
+            Guid = System.Guid.NewGuid().ToString();
+            CreatorId = creatorId;
+            Name = name;
+            Description = description;
+            CreationDate = DateTime.UtcNow;
+        }
+
     }
 }

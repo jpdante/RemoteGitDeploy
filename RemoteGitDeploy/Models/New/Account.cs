@@ -1,8 +1,9 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using RemoteGitDeploy.Core;
 
-namespace RemoteGitDeploy.Model.New {
+namespace RemoteGitDeploy.Models.New {
     public class Account {
 
         [Key]
@@ -32,6 +33,9 @@ namespace RemoteGitDeploy.Model.New {
         public string Password { get; set; }
 
         [Required]
+        public Permission Permissions { get; set; }
+
+        [Required]
         [Column(TypeName = "TIMESTAMP")]
         public DateTime CreationDate { get; set; }
 
@@ -39,5 +43,17 @@ namespace RemoteGitDeploy.Model.New {
         [Column(TypeName = "TIMESTAMP")]
         public DateTime LastAccess { get; set; }
 
+        public Account(string firstName, string lastName, string email, string username, string password, Permission permissions) {
+            Id = Security.IdGen.GetId();
+            Guid = System.Guid.NewGuid().ToString();
+            FirstName = firstName;
+            LastName = lastName;
+            Email = email;
+            Username = username;
+            Password = password;
+            Permissions = permissions;
+            CreationDate = DateTime.UtcNow;
+            LastAccess = DateTime.UtcNow;
+        }
     }
 }

@@ -12,9 +12,8 @@ using Newtonsoft.Json;
 using RemoteGitDeploy.Actions.Data;
 using RemoteGitDeploy.Actions.Data.Repository;
 using RemoteGitDeploy.Actions.Repository;
-using RemoteGitDeploy.Model.Database;
 using RemoteGitDeploy.Utils;
-using Repository = RemoteGitDeploy.Model.Repository;
+using Repository = RemoteGitDeploy.Models.Repository;
 
 namespace RemoteGitDeploy.Manager {
     public class RepositoryManager {
