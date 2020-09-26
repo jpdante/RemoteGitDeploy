@@ -16,7 +16,9 @@ interface IRepository {
   guid: string;
   name: string;
   description: string;
-  team: ITeam;
+  git: string;
+  branch: string;
+  creationDate: string;
 }
 
 interface IState {
@@ -24,7 +26,7 @@ interface IState {
   repositories: IRepository[];
 }
 
-interface IProps { }
+interface IProps {}
 
 class SideBar extends React.Component<IProps, IState> {
   constructor(props: IProps) {
@@ -36,26 +38,63 @@ class SideBar extends React.Component<IProps, IState> {
   }
 
   async componentDidMount() {
-    var response = await net.get("/api/get/repositories");
-    if (response.data.success) {
-      this.setState({
-        repositories: response.data.repositories,
+    await net
+      .get("/api/repositories/get")
+      .then((response) => {
+        if (response.data) {
+          if (response.data.error) {
+            this.setState({
+              teams: [],
+            });
+            return;
+          }
+          if (response.data.success) {
+            this.setState({
+              repositories: response.data.repositories,
+            });
+          }
+        }
+      })
+      .catch((reason) => {
+        if (
+          reason.response &&
+          reason.response.data &&
+          reason.response.data.error
+        ) {
+          this.setState({
+            repositories: [],
+          });
+        }
       });
-    } else {
-      this.setState({
-        repositories: [],
+
+    await net
+      .get("/api/teams/get")
+      .then((response) => {
+        if (response.data) {
+          if (response.data.error) {
+            this.setState({
+              teams: [],
+            });
+            return;
+          }
+          if (response.data.success) {
+            this.setState({
+              teams: response.data.teams,
+            });
+          }
+        }
+      })
+      .catch((reason) => {
+        if (
+          reason.response &&
+          reason.response.data &&
+          reason.response.data.error
+        ) {
+          this.setState({
+            teams: [],
+          });
+        }
       });
-    }
-    response = await net.get("/api/get/teams");
-    if (response.data.success) {
-      this.setState({
-        teams: response.data.teams,
-      });
-    } else {
-      this.setState({
-        teams: [],
-      });
-    }
   }
 
   render() {
@@ -71,13 +110,15 @@ class SideBar extends React.Component<IProps, IState> {
           </Link>
         </div>
         <ul className="nav flex-column">
-        {this.state.repositories.map((repository) => (
+          {this.state.repositories.map((repository) => (
             <li className="nav-item" key={repository.id}>
               <Link className="nav-link" to={`/repository/${repository.guid}`}>
-              <div className={styles.repositoryIcon}>
-                <RepoIcon size={16} />
-              </div>
-              <strong>{repository.team.name}/{repository.name}</strong>
+                <div className={styles.repositoryIcon}>
+                  <RepoIcon size={16} />
+                </div>
+                <strong>
+                  {repository.name}
+                </strong>
               </Link>
             </li>
           ))}

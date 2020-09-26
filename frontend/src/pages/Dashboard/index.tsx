@@ -11,12 +11,16 @@ interface IHistoryParameter {
   color: string;
 }
 
+
 interface IHistory {
   id: string;
-  repository: string;
+  guid: string;
   icon: number;
   name: string;
-  date: string;
+  status: number;
+  startTime: string;
+  finishTime: string;
+  creationDate: string;
   parameters: IHistoryParameter[];
 }
 
@@ -34,7 +38,7 @@ class Dashboard extends React.Component<IProps, IState> {
   }
 
   async componentDidMount() {
-    const response = await net.get("/api/get/repositories/history");
+    const response = await net.get("/api/actions/get");
     if (response.data.success) {
       this.setState({
         history: response.data.history,
@@ -54,8 +58,8 @@ class Dashboard extends React.Component<IProps, IState> {
           <div className="row">
             <SideBar />
             <div className="col-12 col-md-8 col-lg-9 content auto-overflow">
-              {this.state.history.map((history) => (
-                <RepositoryHistory history={history} />
+              {this.state.history.map((history, index) => (
+                <RepositoryHistory history={history} key={index} />
               ))}
               <Footer />
             </div>

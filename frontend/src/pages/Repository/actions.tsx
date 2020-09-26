@@ -29,12 +29,15 @@ interface ILog {
 
 interface IHistory {
   id: string;
-  repository: string;
+  guid: string;
+  icon: number;
   name: string;
-  date: string;
+  status: number;
+  startTime: string;
+  finishTime: string;
+  creationDate: string;
+  log: ILog[];
   parameters: IHistoryParameter[];
-  logs: ILog[];
-  success: boolean;
 }
 
 interface IProps {
@@ -55,18 +58,22 @@ class ActionsTab extends React.Component<IProps, IState> {
 
   async componentDidMount() {
     const { repository } = this.props;
-    const response = await net.post("/api/get/action/history", {
-      id: repository.id,
+    await net
+    .post("/api/actions/repository/get", {
+      guid: repository.guid,
+    })
+    .then((response) => {
+      if (response.data) {
+        if (response.data.error) {
+          return;
+        }
+        if (response.data.success) {
+          this.setState({
+            history: response.data.history,
+          });
+        }
+      }
     });
-    if (response.data.success) {
-      this.setState({
-        history: response.data.history,
-      });
-    } else {
-      this.setState({
-        history: [],
-      });
-    }
   }
 
   render() {

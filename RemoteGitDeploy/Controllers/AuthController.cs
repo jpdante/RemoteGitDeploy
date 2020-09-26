@@ -36,6 +36,7 @@ namespace RemoteGitDeploy.Controllers {
                     context.Accounts.Update(account);
                     await context.SaveChangesAsync();
                     httpContext.Session.Set("account", account.Id);
+                    if (loginData.RememberMe) httpContext.Session.SetExpireTime(TimeSpan.FromDays(30));
                     await httpContext.Session.CommitAsync();
                     await httpContext.Response.WriteAsync(JsonConvert.SerializeObject(new { success = true, token = httpContext.Session.Id, account = new AccountView(account) }));
 

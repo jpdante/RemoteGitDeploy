@@ -51,7 +51,7 @@ function UserBar() {
           <Link className="dropdown-item" to="/manage/repositories">Manage repositories</Link>
           <Link className="dropdown-item" to="/manage/teams">Manage teams</Link>
           <Link className="dropdown-item" to="/manage/snippets">Manage snippets</Link>
-          <Link className="dropdown-item" to="/manage/users">Manage users</Link>
+          <Link className="dropdown-item" to="/manage/users">Manage accounts</Link>
         </div>
       </li>
       <li className="nav-item dropdown">

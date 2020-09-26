@@ -13,7 +13,6 @@ using RemoteGitDeploy.Extensions;
 using RemoteGitDeploy.Models.New;
 using RemoteGitDeploy.Models.RequestData;
 using RemoteGitDeploy.Mvc;
-using RemoteGitDeploy.Security;
 
 namespace RemoteGitDeploy.Controllers {
     public class TeamController {
@@ -41,13 +40,13 @@ namespace RemoteGitDeploy.Controllers {
             }));
         }
 
-        [HttpGet("/api/team/get", true)]
+        [HttpGet("/api/teams/get", true)]
         public static async Task GetTeams(HttpContext httpContext) {
             await using var context = new RgdContext();
 
             if (!httpContext.Session.GetAccountId(out long accountId)) throw new Exception("Failed to get accountId");
             var creatorPermissions = await (from a in context.Accounts where a.Id.Equals(accountId) select a.Permissions).FirstOrDefaultAsync();
-            if ((creatorPermissions & Permission.ReadTeam) != Permission.ReadTeam) throw new HttpException(403, "No ReadTeam permission.");
+            if ((creatorPermissions & Permission.ManageTeam) != Permission.ManageTeam) throw new HttpException(403, "No ManageTeam permission.");
 
             Team[] teams = await (from t in context.Teams select t).ToArrayAsync();
 

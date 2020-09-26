@@ -16,6 +16,7 @@ interface ISnippet {
   guid: string;
   description: string;
   files: IFile[];
+  creationDate: string;
 }
 
 interface IState {
@@ -35,7 +36,7 @@ class ManageSnippets extends React.Component<IProps, IState> {
   }
 
   async componentWillMount() {
-    const response = await net.get("/api/get/snippets");
+    const response = await net.get("/api/snippets/get");
     if (response.data.success) {
       this.setState({
         snippets: response.data.snippets,
@@ -67,7 +68,7 @@ class ManageSnippets extends React.Component<IProps, IState> {
                         to={`/snippet/${snippet.guid}`}
                         key={snippet.id}
                       >
-                        <span className="mr-auto">{snippet.description}</span>
+                        <span className="mr-auto"><span className="badge badge-secondary mx-1">{snippet.creationDate}</span>{snippet.description}</span>
                         {snippet.files.map((file) => (
                           <span className="badge badge-primary mx-1">
                             {file.filename}

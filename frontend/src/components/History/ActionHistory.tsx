@@ -1,5 +1,9 @@
 import React from "react";
-import { CheckCircleFillIcon, XCircleFillIcon } from "@primer/octicons-react";
+import {
+  CheckCircleFillIcon,
+  SyncIcon,
+  XCircleFillIcon,
+} from "@primer/octicons-react";
 
 import styles from "./notification.module.scss";
 import ConsoleLog from "../ConsoleLog";
@@ -17,12 +21,15 @@ interface ILog {
 
 interface IHistory {
   id: string;
-  repository: string;
+  guid: string;
+  icon: number;
   name: string;
-  date: string;
+  status: number;
+  startTime: string;
+  finishTime: string;
+  creationDate: string;
+  log: ILog[];
   parameters: IHistoryParameter[];
-  logs: ILog[];
-  success: boolean;
 }
 
 interface IProps {
@@ -52,37 +59,40 @@ class ActionHistory extends React.Component<IProps, IState> {
     return (
       <div className="card mb-3">
         <div className={`card-header ${styles.historyCardHeader}`}>
-          {this.props.history.success ? (
+          {this.props.history.status === 0 ? (
             <CheckCircleFillIcon size={16} className="text-success" />
+          ) : this.props.history.status === -1 ? (
+            <SyncIcon size={16} className={`text-primary ${styles.rotating}`} />
           ) : (
             <XCircleFillIcon size={16} className="text-danger" />
           )}
           {this.props.history.name}
           <span className="badge badge-secondary float-right">
-            {this.props.history.date}
+            {this.props.history.creationDate}
           </span>
         </div>
-        {this.props.history.parameters.length > 0 && (
-          <div
-            className={`card-body d-flex ${styles.historyCardBody} border-bottom`}
-          >
-            {this.props.history.parameters.map((parameter) => (
-              <div className="flex-fill">
-                <span className={styles.historyCardLabel}>
-                  {parameter.name}:
-                </span>
-                <span className={`badge badge-${parameter.color}`}>
-                  {parameter.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        {this.props.history.parameters &&
+          this.props.history.parameters.length > 0 && (
+            <div
+              className={`card-body card-success d-flex ${styles.historyCardBody} border-bottom`}
+            >
+              {this.props.history.parameters.map((parameter) => (
+                <div className="flex-fill">
+                  <span className={styles.historyCardLabel}>
+                    {parameter.name}:
+                  </span>
+                  <span className={`badge badge-${parameter.color}`}>
+                    {parameter.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         <ConsoleLog
           className={`${styles.consoleLog} ${
             this.state.hidden ? styles.hidden : ""
           }`}
-          log={this.props.history.logs}
+          log={this.props.history.log}
           insideCard={true}
         />
         <div className="text-center my-2">

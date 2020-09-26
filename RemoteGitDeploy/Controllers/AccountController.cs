@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HtcSharp.HttpModule.Http.Abstractions;
@@ -10,6 +11,7 @@ using RemoteGitDeploy.Core;
 using RemoteGitDeploy.Extensions;
 using RemoteGitDeploy.Models.New;
 using RemoteGitDeploy.Models.RequestData;
+using RemoteGitDeploy.Models.Views;
 using RemoteGitDeploy.Mvc;
 using RemoteGitDeploy.Security;
 
@@ -66,5 +68,18 @@ namespace RemoteGitDeploy.Controllers {
             }));
         }
 
+        [HttpGet("/api/accounts/get", true)]
+        public static async Task GetAccounts(HttpContext httpContext) {
+            await using var context = new RgdContext();
+
+            if (!httpContext.Session.GetAccountId(out long accountId)) throw new Exception("Failed to get accountId");
+            var creatorPermissions = await (from a in context.Accounts where a.Id.Equals(accountId) select a.Permissions).FirstOrDefaultAsync();
+            if ((creatorPermissions & Permission.ManageAccount) != Permission.ManageAccount) throw new HttpException(403, "No ManageAccount permission.");
+
+            Account[] accountsRaw = await (from a in context.Accounts select a).ToArrayAsync();
+            List <AccountView> accounts = accountsRaw.Select(account => new AccountView(account)).ToList();
+
+            await httpContext.Response.WriteAsync(JsonConvert.SerializeObject(new { success = true, accounts }));
+        }
     }
 }

@@ -14,7 +14,7 @@ interface IProps {
 
 interface IFile {
   filename: string;
-  code: string;
+  content: string;
   language: string;
 }
 
@@ -48,16 +48,32 @@ class Snippet extends React.Component<IProps, IState> {
 
   async componentDidMount() {
     const { guid } = this.props;
-    const response = await net.post("/api/get/snippet", {
-      guid,
-    });
-    if (response.data.success) {
-      this.setState({
-        snippet: response.data.snippet,
+    await net
+      .post("/api/snippet/get", {
+        guid,
+      })
+      .then((response) => {
+        if (response.data) {
+          if (response.data.error) {
+            navigate("/");
+            return;
+          }
+          if (response.data.success) {
+            this.setState({
+              snippet: response.data.snippet,
+            });
+          }
+        }
+      })
+      .catch((reason) => {
+        if (
+          reason.response &&
+          reason.response.data &&
+          reason.response.data.error
+        ) {
+          navigate("/");
+        }
       });
-    } else {
-      navigate("/");
-    }
   }
 
   render() {
@@ -67,11 +83,11 @@ class Snippet extends React.Component<IProps, IState> {
         <div className="wrapper">
           <div className="auto-overflow">
             <div className="container content">
-              {this.state.snippet.files.map((file) => (
-                <div className={`card ${styles.snippet}`}>
+              {this.state.snippet.files.map((file, index) => (
+                <div className={`card ${styles.snippet}`} key={index}>
                   <div className="card-header">{file.filename}</div>
                   <div className={`card-body`}>
-                    <Highlight language={file.language}>{file.code}</Highlight>
+                    <Highlight language={file.language}>{file.content}</Highlight>
                   </div>
                 </div>
               ))}

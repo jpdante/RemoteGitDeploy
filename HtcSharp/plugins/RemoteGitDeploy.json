@@ -1,11 +1,21 @@
 {
-  "Domain": "some-domain.com",
-  "RedisString": "localhost",
-  "RedisDatabase": 0,
-  "DatabaseString": "Server=127.0.0.1;Port=3306;Database=remotegitdeploy;Uid=root;Pwd=root;",
-  "GitUsername": "username",
-  "GitPersonalAccessToken": "token",
-  "GitRepositoriesDirectory": "./RemoteGitDeploy/",
-  "DevKey": "37dd96e03b7f469b9b87ed3ebb5a805f",
-  "RepositorySecreteKey": "7407493218ec4e71923154b2726ddbd1"
+  "database": {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "database": "remotegitdeploy",
+    "username": "root",
+    "password": "root"
+  },
+  "redis": {
+    "connectionString": "localhost",
+    "database": 0
+  },
+  "git": {
+    "sshPublicKey": "sha-rsa ******************* ****@****.***",
+    "repositoriesDirectory": "./rgd/"
+  },
+  "other": {
+    "domain": "domain.com",
+    "secretKey": "23977c5b41e3428d964c30dc80b627e2fb8dbc0ba9fe493fa5de91a251620064"
+  }
 }

@@ -21,8 +21,6 @@ interface IRepository {
   name: string;
   description: string;
   team: ITeam;
-  lastCommit: string;
-  lastUpdate: string;
 }
 
 interface IProps {
@@ -49,8 +47,6 @@ class Repository extends React.Component<IProps, IState> {
           name: "",
           description: "",
         },
-        lastCommit: "",
-        lastUpdate: "",
       },
     };
   }
@@ -60,17 +56,33 @@ class Repository extends React.Component<IProps, IState> {
     this.setState({
       loading: true,
     });
-    const response = await net.post("/api/get/repository", {
-      guid,
-    });
-    if (response.data.success) {
-      this.setState({
-        loading: false,
-        repository: response.data.repository,
+    await net
+      .post("/api/repository/get", {
+        guid,
+      })
+      .then((response) => {
+        if (response.data) {
+          if (response.data.error) {
+            navigate("/");
+            return;
+          }
+          if (response.data.success) {
+            this.setState({
+              loading: false,
+              repository: response.data.repository,
+            });
+          }
+        }
+      })
+      .catch((reason) => {
+        if (
+          reason.response &&
+          reason.response.data &&
+          reason.response.data.error
+        ) {
+          navigate("/");
+        }
       });
-    } else {
-      navigate("/dashboard");
-    }
   }
 
   render() {
@@ -84,14 +96,16 @@ class Repository extends React.Component<IProps, IState> {
           <div className="auto-overflow">
             <div className="content-nopadding bg-white">
               <RepositoryBar repository={this.state.repository} />
-              <div className="container">
-                <div className="tab-content">
-                  <StatusTab repository={this.state.repository} />
-                  <ActionsTab repository={this.state.repository} />
-                  <SettingsTab repository={this.state.repository} />
+              {this.state.repository.guid && (
+                <div className="container">
+                  <div className="tab-content">
+                    <StatusTab repository={this.state.repository} />
+                    <ActionsTab repository={this.state.repository} />
+                    <SettingsTab repository={this.state.repository} />
+                  </div>
+                  <Footer />
                 </div>
-                <Footer />
-              </div>
+              )}
             </div>
           </div>
         </div>

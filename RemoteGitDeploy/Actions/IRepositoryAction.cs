@@ -1,25 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using RemoteGitDeploy.Actions.Data;
+using System.Threading.Tasks;
 using RemoteGitDeploy.Models;
+using RemoteGitDeploy.Models.Internal;
+using RemoteGitDeploy.Models.Views;
 
-namespace RemoteGitDeploy.Actions.Repository {
+namespace RemoteGitDeploy.Actions {
     public interface IRepositoryAction {
-        public string RepositoryGuid { get; }
+        public string ActionGuid { get; }
         public bool Running { get; }
         public bool Success { get; set; }
         public bool InQueue { get; set; }
         public bool Finished { get; set; }
-        public int DeleteDelay { get; set; }
-        public int KillDelay { get; set; }
-        public IActionData Data { get; }
         public DateTime StartTime { get; }
         public DateTime ExitTime { get; }
         public List<OutputLine> Output { get; }
-        public bool Start();
-        public void ForceKill();
-        public delegate void OnFinishDelegate(IRepositoryAction action, IActionData data);
+
+        public Task<bool> Start(InternalRepository internalRepository);
+        public Task<bool> Cancel();
+        public ActionHistoryCompactView GetFutureActionHistoryCompactView();
+
+        public delegate void OnFinishDelegate(IRepositoryAction action);
         public event OnFinishDelegate OnFinish;
     }
 }

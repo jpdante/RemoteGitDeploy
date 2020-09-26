@@ -17,7 +17,7 @@ namespace RemoteGitDeploy.Migrations
                 .HasAnnotation("ProductVersion", "3.1.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.AccessHistory", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.AccessHistory", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
@@ -40,7 +40,7 @@ namespace RemoteGitDeploy.Migrations
                     b.ToTable("AccessHistory");
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.Account", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.Account", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
@@ -97,15 +97,24 @@ namespace RemoteGitDeploy.Migrations
                     b.ToTable("Accounts");
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.ActionHistory", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.ActionHistory", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("TIMESTAMP");
+
+                    b.Property<DateTime>("FinishTime")
+                        .HasColumnType("TIMESTAMP");
 
                     b.Property<string>("Guid")
                         .IsRequired()
                         .HasColumnType("varchar(36) CHARACTER SET utf8mb4")
                         .HasMaxLength(36);
+
+                    b.Property<int>("Icon")
+                        .HasColumnType("int");
 
                     b.Property<string>("Log")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
@@ -118,6 +127,9 @@ namespace RemoteGitDeploy.Migrations
 
                     b.Property<long>("RepositoryId")
                         .HasColumnType("bigint");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("TIMESTAMP");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -132,7 +144,7 @@ namespace RemoteGitDeploy.Migrations
                     b.ToTable("ActionHistory");
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.Repository", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.Repository", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
@@ -144,9 +156,6 @@ namespace RemoteGitDeploy.Migrations
 
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("TIMESTAMP");
-
-                    b.Property<long>("CreatorId")
-                        .HasColumnType("bigint");
 
                     b.Property<string>("Description")
                         .HasColumnType("longtext CHARACTER SET utf8mb4")
@@ -167,12 +176,23 @@ namespace RemoteGitDeploy.Migrations
                         .HasColumnType("varchar(64) CHARACTER SET utf8mb4")
                         .HasMaxLength(64);
 
+                    b.Property<long>("OwnerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PersonalAccessToken")
+                        .IsRequired()
+                        .HasColumnType("varchar(40) CHARACTER SET utf8mb4")
+                        .HasMaxLength(40);
+
                     b.Property<long>("TeamId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id");
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("varchar(64) CHARACTER SET utf8mb4")
+                        .HasMaxLength(64);
 
-                    b.HasIndex("CreatorId");
+                    b.HasKey("Id");
 
                     b.HasIndex("Guid")
                         .IsUnique();
@@ -180,12 +200,14 @@ namespace RemoteGitDeploy.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
+                    b.HasIndex("OwnerId");
+
                     b.HasIndex("TeamId");
 
                     b.ToTable("Repositories");
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.Snippet", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.Snippet", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
@@ -215,7 +237,7 @@ namespace RemoteGitDeploy.Migrations
                     b.ToTable("Snippets");
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.SnippetFile", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.SnippetFile", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
@@ -247,7 +269,7 @@ namespace RemoteGitDeploy.Migrations
                     b.ToTable("SnippetFiles");
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.Team", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.Team", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
@@ -285,7 +307,7 @@ namespace RemoteGitDeploy.Migrations
                     b.ToTable("Teams");
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.TeamMember", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.TeamMember", b =>
                 {
                     b.Property<long>("Id")
                         .HasColumnType("bigint");
@@ -306,75 +328,75 @@ namespace RemoteGitDeploy.Migrations
                     b.ToTable("TeamMembers");
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.AccessHistory", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.AccessHistory", b =>
                 {
-                    b.HasOne("RemoteGitDeploy.Model.New.Account", "Account")
+                    b.HasOne("RemoteGitDeploy.Models.New.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.ActionHistory", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.ActionHistory", b =>
                 {
-                    b.HasOne("RemoteGitDeploy.Model.New.Repository", "Repository")
+                    b.HasOne("RemoteGitDeploy.Models.New.Repository", "Repository")
                         .WithMany()
                         .HasForeignKey("RepositoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.Repository", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.Repository", b =>
                 {
-                    b.HasOne("RemoteGitDeploy.Model.New.Account", "Creator")
+                    b.HasOne("RemoteGitDeploy.Models.New.Account", "Owner")
                         .WithMany()
-                        .HasForeignKey("CreatorId")
+                        .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("RemoteGitDeploy.Model.New.Team", "Team")
+                    b.HasOne("RemoteGitDeploy.Models.New.Team", "Team")
                         .WithMany()
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.Snippet", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.Snippet", b =>
                 {
-                    b.HasOne("RemoteGitDeploy.Model.New.Account", "Creator")
+                    b.HasOne("RemoteGitDeploy.Models.New.Account", "Creator")
                         .WithMany()
                         .HasForeignKey("CreatorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.SnippetFile", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.SnippetFile", b =>
                 {
-                    b.HasOne("RemoteGitDeploy.Model.New.Snippet", "Snippet")
+                    b.HasOne("RemoteGitDeploy.Models.New.Snippet", "Snippet")
                         .WithMany()
                         .HasForeignKey("SnippetId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.Team", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.Team", b =>
                 {
-                    b.HasOne("RemoteGitDeploy.Model.New.Account", "Creator")
+                    b.HasOne("RemoteGitDeploy.Models.New.Account", "Creator")
                         .WithMany()
                         .HasForeignKey("CreatorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RemoteGitDeploy.Model.New.TeamMember", b =>
+            modelBuilder.Entity("RemoteGitDeploy.Models.New.TeamMember", b =>
                 {
-                    b.HasOne("RemoteGitDeploy.Model.New.Account", "Account")
+                    b.HasOne("RemoteGitDeploy.Models.New.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("RemoteGitDeploy.Model.New.Team", "Team")
+                    b.HasOne("RemoteGitDeploy.Models.New.Team", "Team")
                         .WithMany()
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)

@@ -10,6 +10,8 @@ namespace RemoteGitDeploy.Models.RequestData {
 
         public string Password { get; set; }
 
+        public bool RememberMe { get; set; }
+
         public async Task<bool> ValidateData(HttpContext httpContext) {
             if (string.IsNullOrEmpty(Username)) {
                 await httpContext.Response.SendRequestErrorAsync(-1, "Missing field 'username'.");

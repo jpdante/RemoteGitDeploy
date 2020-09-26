@@ -1,4 +1,5 @@
-﻿using System.Net.Mail;
+﻿using System.Linq;
+using System.Net.Mail;
 using System.Threading.Tasks;
 using HtcSharp.HttpModule.Http.Abstractions;
 using RemoteGitDeploy.Extensions;
@@ -16,7 +17,10 @@ namespace RemoteGitDeploy.Models.RequestData {
                 await httpContext.Response.SendRequestErrorAsync(-1, "Missing field 'name'.");
                 return false;
             }
-
+            if (Name.Any(char.IsWhiteSpace)) {
+                await httpContext.Response.SendRequestErrorAsync(-1, "Team name can not have spaces.");
+                return false;
+            }
             return true;
         }
     }

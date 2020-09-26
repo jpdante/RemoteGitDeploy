@@ -31,7 +31,7 @@ const PrivateRoute = (props) => {
 class Routes extends React.Component {
   async componentDidMount() {
     net.get("/api/auth/checksession").then((response) => {
-      if (response.data.invalidSession === true) {
+      if (response.data.isValid === false) {
         this.props.auth.set("token")(null);
       }
     });

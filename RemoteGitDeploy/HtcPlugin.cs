@@ -2,24 +2,24 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using HtcSharp.Core.Logging.Abstractions;
 using HtcSharp.Core.Plugin;
 using HtcSharp.Core.Plugin.Abstractions;
-using HtcSharp.Core.Utils;
 using HtcSharp.HttpModule;
 using HtcSharp.HttpModule.Http.Abstractions;
 using HtcSharp.HttpModule.Routing;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using RemoteGitDeploy.Core;
 using RemoteGitDeploy.Extensions;
 using RemoteGitDeploy.Manager;
+using RemoteGitDeploy.Models.Internal;
+using RemoteGitDeploy.Models.New;
 using RemoteGitDeploy.Mvc;
+using RemoteGitDeploy.Security;
 using StackExchange.Redis;
 
 namespace RemoteGitDeploy {
@@ -35,9 +35,7 @@ namespace RemoteGitDeploy {
         internal static ConnectionMultiplexer RedisConnection;
         internal static IDatabase Redis;
         internal static ILogger Logger;
-        internal static string Domain { get; private set; }
-        internal static string DevKey { get; private set; }
-        internal static string RepositorySecreteKey { get; private set; }
+        internal static Config Config;
 
         public async Task Load(PluginServerContext pluginServerContext, ILogger logger) {
             PluginServerContext = pluginServerContext;
@@ -49,39 +47,28 @@ namespace RemoteGitDeploy {
 
             string path = Path.Combine(PluginServerContext.PluginsPath, "RemoteGitDeploy.json");
             if (!File.Exists(path)) {
-                await using var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-                await using var streamWriter = new StreamWriter(fileStream);
-                await streamWriter.WriteAsync(JsonUtils.SerializeObject(new {
-                    Domain = "some-domain.com",
-                    RedisString = "localhost",
-                    RedisDatabase = 0,
-                    DatabaseString = "Server=127.0.0.1;Port=3306;Database=remotegitdeploy;Uid=root;Pwd=root;",
-                    GitUsername = "username",
-                    GitPersonalAccessToken = "token",
-                    GitRepositoriesDirectory = "./RemoteGitDeploy/",
-                    DevKey = Guid.NewGuid().ToString("N"),
-                    RepositorySecreteKey = Guid.NewGuid().ToString("N"),
-                }, true));
+                await using var writeFileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+                await using var streamWriter = new StreamWriter(writeFileStream);
+                await streamWriter.WriteAsync(JsonConvert.SerializeObject(new Config(), Formatting.Indented));
             }
-            var config = JsonUtils.GetJsonFile(path);
+            await using var readFileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var streamReader = new StreamReader(readFileStream);
+            string json = await streamReader.ReadToEndAsync();
+            Config = JsonConvert.DeserializeObject<Config>(json);
 
-            Domain = config.GetValue("Domain", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
-            DevKey = config.GetValue("DevKey", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
-            RepositorySecreteKey = config.GetValue("RepositorySecreteKey", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
+            RgdContext.SetConnectionString($"Server={Config.Database.Host};Port={Config.Database.Port};Database={Config.Database.Database};Uid={Config.Database.Username};Pwd={Config.Database.Password};");
 
-            var gitUsername = config.GetValue("GitUsername", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
-            var gitPersonalAccessToken = config.GetValue("GitPersonalAccessToken", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
-            var gitRepositoriesDirectory = config.GetValue("GitRepositoriesDirectory", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
-            RepositoryManager = new RepositoryManager(gitUsername, gitPersonalAccessToken, gitRepositoriesDirectory);
+            await using var context = new RgdContext();
+            if (await context.Database.EnsureCreatedAsync()) {
+                string password = await Password.GeneratePassword("admin");
+                await context.Accounts.AddAsync(new Account("admin", "admin", "admin", "admin", password, Permission.All));
+                await context.SaveChangesAsync();
+            }
 
-            var redisString = config.GetValue("RedisString", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
-            RedisConnection = await ConnectionMultiplexer.ConnectAsync(redisString);
+            RepositoryManager = new RepositoryManager(Path.GetFullPath(Config.Git.RepositoriesDirectory));
 
-            var redisDatabase = config.GetValue("RedisDatabase", StringComparison.CurrentCultureIgnoreCase)!.Value<int>();
-            Redis = RedisConnection.GetDatabase(redisDatabase);
-
-            var databaseString = config.GetValue("DatabaseString", StringComparison.CurrentCultureIgnoreCase)!.Value<string>();
-            RgdContext.SetConnectionString(databaseString);
+            RedisConnection = await ConnectionMultiplexer.ConnectAsync(Config.Redis.ConnectionString);
+            Redis = RedisConnection.GetDatabase(Config.Redis.Database);
 
             LoadControllers();
         }
@@ -162,9 +149,8 @@ namespace RemoteGitDeploy {
                             await httpContext.Response.SendErrorAsync(ex.Status, ex.Message);
                         } catch (Exception ex) {
                             if (!httpContext.Response.HasStarted) {
-                                var guid = Guid.NewGuid();
-                                Logger.LogError(guid, ex);
-                                await httpContext.Response.SendInternalErrorAsync(500, $"[{guid}] An internal failure occurred. Please try again later.");
+                                Logger.LogError($"[{httpContext.Connection.Id}]", ex);
+                                await httpContext.Response.SendInternalErrorAsync(500, $"[{httpContext.Connection.Id}] An internal failure occurred. Please try again later.");
                             }
                         }
                     } else {

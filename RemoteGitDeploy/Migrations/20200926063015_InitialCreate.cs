@@ -18,6 +18,7 @@ namespace RemoteGitDeploy.Migrations
                     Email = table.Column<string>(maxLength: 255, nullable: false),
                     Username = table.Column<string>(maxLength: 64, nullable: false),
                     Password = table.Column<string>(nullable: false),
+                    Permissions = table.Column<int>(nullable: false),
                     CreationDate = table.Column<DateTime>(type: "TIMESTAMP", nullable: false),
                     LastAccess = table.Column<DateTime>(type: "TIMESTAMP", nullable: false)
                 },
@@ -117,7 +118,9 @@ namespace RemoteGitDeploy.Migrations
                 {
                     Id = table.Column<long>(nullable: false),
                     Guid = table.Column<string>(maxLength: 36, nullable: false),
-                    CreatorId = table.Column<long>(nullable: false),
+                    OwnerId = table.Column<long>(nullable: false),
+                    Username = table.Column<string>(maxLength: 64, nullable: false),
+                    PersonalAccessToken = table.Column<string>(maxLength: 40, nullable: false),
                     Name = table.Column<string>(maxLength: 64, nullable: false),
                     Git = table.Column<string>(maxLength: 255, nullable: false),
                     Branch = table.Column<string>(maxLength: 64, nullable: false),
@@ -129,8 +132,8 @@ namespace RemoteGitDeploy.Migrations
                 {
                     table.PrimaryKey("PK_Repositories", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Repositories_Accounts_CreatorId",
-                        column: x => x.CreatorId,
+                        name: "FK_Repositories_Accounts_OwnerId",
+                        column: x => x.OwnerId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -174,10 +177,14 @@ namespace RemoteGitDeploy.Migrations
                     Id = table.Column<long>(nullable: false),
                     Guid = table.Column<string>(maxLength: 36, nullable: false),
                     RepositoryId = table.Column<long>(nullable: false),
+                    Icon = table.Column<int>(nullable: false),
                     Name = table.Column<string>(nullable: true),
                     Parameters = table.Column<string>(nullable: true),
                     Log = table.Column<string>(nullable: true),
-                    Status = table.Column<int>(nullable: false)
+                    Status = table.Column<int>(nullable: false),
+                    StartTime = table.Column<DateTime>(type: "TIMESTAMP", nullable: false),
+                    FinishTime = table.Column<DateTime>(type: "TIMESTAMP", nullable: false),
+                    CreationDate = table.Column<DateTime>(type: "TIMESTAMP", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -225,11 +232,6 @@ namespace RemoteGitDeploy.Migrations
                 column: "RepositoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Repositories_CreatorId",
-                table: "Repositories",
-                column: "CreatorId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Repositories_Guid",
                 table: "Repositories",
                 column: "Guid",
@@ -240,6 +242,11 @@ namespace RemoteGitDeploy.Migrations
                 table: "Repositories",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Repositories_OwnerId",
+                table: "Repositories",
+                column: "OwnerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Repositories_TeamId",

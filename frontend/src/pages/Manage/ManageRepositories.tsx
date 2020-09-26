@@ -37,16 +37,34 @@ class ManageRepositories extends React.Component<IProps, IState> {
   }
 
   async componentWillMount() {
-    const response = await net.get("/api/get/repositories");
-    if (response.data.success) {
-      this.setState({
-        repositories: response.data.repositories,
-      });
-    } else {
-      this.setState({
-        repositories: [],
-      });
-    }
+    await net
+    .get("/api/repositories/get")
+    .then((response) => {
+      if (response.data) {
+        if (response.data.error) {
+          this.setState({
+            repositories: [],
+          });
+          return;
+        }
+        if (response.data.success) {
+          this.setState({
+            repositories: response.data.repositories,
+          });
+        }
+      }
+    })
+    .catch((reason) => {
+      if (
+        reason.response &&
+        reason.response.data &&
+        reason.response.data.error
+      ) {
+        this.setState({
+          repositories: [],
+        });
+      }
+    });
   }
 
   render() {
@@ -69,7 +87,7 @@ class ManageRepositories extends React.Component<IProps, IState> {
                         to={`/repository/${repository.guid}`}
                         key={repository.id}
                       >
-                        {repository.team.name}/{repository.name}
+                        {repository.name}
                       </Link>
                     ))}
                   </div>

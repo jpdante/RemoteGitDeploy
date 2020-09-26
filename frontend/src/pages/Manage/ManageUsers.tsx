@@ -6,7 +6,7 @@ import net from "../../services/net";
 
 interface IProps {}
 
-interface IUser {
+interface IAccount {
   id: string;
   firstName: string;
   lastName: string;
@@ -17,30 +17,48 @@ interface IUser {
 interface IState {
   error: string;
   loading: boolean;
-  users: IUser[];
+  accounts: IAccount[];
 }
 
-class ManageUsers extends React.Component<IProps, IState> {
+class ManageAccounts extends React.Component<IProps, IState> {
   constructor(props: IProps) {
     super(props);
     this.state = {
       error: "",
       loading: false,
-      users: [],
+      accounts: [],
     };
   }
 
   async componentWillMount() {
-    const response = await net.get("/api/get/users");
-    if (response.data.success) {
-      this.setState({
-        users: response.data.users,
-      });
-    } else {
-      this.setState({
-        users: [],
-      });
-    }
+    await net
+    .get("/api/accounts/get")
+    .then((response) => {
+      if (response.data) {
+        if (response.data.error) {
+          this.setState({
+            accounts: [],
+          });
+          return;
+        }
+        if (response.data.success) {
+          this.setState({
+            accounts: response.data.accounts,
+          });
+        }
+      }
+    })
+    .catch((reason) => {
+      if (
+        reason.response &&
+        reason.response.data &&
+        reason.response.data.error
+      ) {
+        this.setState({
+          accounts: [],
+        });
+      }
+    });
   }
 
   render() {
@@ -53,24 +71,24 @@ class ManageUsers extends React.Component<IProps, IState> {
               <div className="row">
                 <div className="col-sm-1 col-md-2 col-lg-2"></div>
                 <div className="col-sm-10 col-md-8 col-lg-8">
-                  <h2 className="text-center mt-3">Managing users</h2>
+                  <h2 className="text-center mt-3">Managing accounts</h2>
                   <hr />
                   <div className="list-group">
-                    {this.state.users.map((user) => (
+                    {this.state.accounts.map((account) => (
                       <Link
                         type="button"
                         className="list-group-item d-flex align-items-center list-group-item-action"
-                        to={`/user/${user.username}`}
-                        key={user.id}
+                        to={`/user/${account.username}`}
+                        key={account.id}
                       >
                         <span className="mr-auto">
-                          {user.firstName} {user.lastName}
+                          {account.firstName} {account.lastName}
                         </span>
                         <span className="badge badge-info mx-1">
-                          {user.username}
+                          {account.username}
                         </span>
                         <span className="badge badge-primary mx-1">
-                          {user.email}
+                          {account.email}
                         </span>
                       </Link>
                     ))}
@@ -87,4 +105,4 @@ class ManageUsers extends React.Component<IProps, IState> {
   }
 }
 
-export default ManageUsers;
+export default ManageAccounts;

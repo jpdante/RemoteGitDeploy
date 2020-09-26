@@ -1,12 +1,13 @@
+import { navigate } from "@reach/router";
 import React from "react";
 
 class NotFound extends React.Component {
+  componentDidMount() {
+    setTimeout(() => navigate("/dashboard", { replace: true }), 0);
+  }
+
   render() {
-    return (
-      <form className="form-signin">
-        <h1 className="h3 mb-3 font-weight-normal">404 - Page Not Found</h1>
-      </form>
-    );
+    return null;
   }
 }
 

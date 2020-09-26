@@ -55,7 +55,7 @@ namespace RemoteGitDeploy {
                 entity.Property(e => e.Id).ValueGeneratedNever();
                 entity.HasIndex(e => e.Guid).IsUnique();
                 entity.HasIndex(e => e.Name).IsUnique();
-                entity.HasIndex(e => e.CreatorId);
+                entity.HasIndex(e => e.OwnerId);
             });
 
             modelBuilder.Entity<Snippet>(entity => {

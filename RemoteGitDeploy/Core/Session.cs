@@ -24,6 +24,8 @@ namespace RemoteGitDeploy.Core {
 
         private bool _clearAllData;
 
+        public TimeSpan ExpireKey = TimeSpan.FromDays(1);
+
         public Session(HttpContext httpContext) {
             IsAvailable = false;
             Keys = null;
@@ -51,7 +53,7 @@ namespace RemoteGitDeploy.Core {
             if (_removeKeys != null) await HtcPlugin.Redis.HashDeleteAsync("session." + Id, _removeKeys.ToArray());
             if (_updateData != null) {
                 await HtcPlugin.Redis.HashSetAsync($"session:{Id}", _updateData.ToArray());
-                await HtcPlugin.Redis.KeyExpireAsync($"session:{Id}", TimeSpan.FromDays(1));
+                await HtcPlugin.Redis.KeyExpireAsync($"session:{Id}", ExpireKey);
             }
         }
 

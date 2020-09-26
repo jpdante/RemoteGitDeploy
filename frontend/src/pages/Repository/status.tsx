@@ -14,23 +14,11 @@ interface IRepository {
   name: string;
   description: string;
   team: ITeam;
+}
+
+interface IRepositoryStatus {
   lastCommit: string;
   lastUpdate: string;
-}
-
-interface IHistoryParameter {
-  name: string;
-  value: string;
-  color: string;
-}
-
-interface IHistory {
-  id: string;
-  repository: string;
-  icon: number;
-  name: string;
-  date: string;
-  parameters: IHistoryParameter[];
 }
 
 interface IProps {
@@ -38,29 +26,32 @@ interface IProps {
 }
 
 interface IState {
-  history: IHistory[];
+  status: IRepositoryStatus;
 }
 
 class StatusTab extends React.Component<IProps, IState> {
   constructor(props: IProps) {
     super(props);
     this.state = {
-      history: [],
+      status: {
+        lastCommit: "",
+        lastUpdate: "",
+      },
     };
   }
 
   async componentDidMount() {
     const { repository } = this.props;
-    const response = await net.post("/api/get/repository/history", {
-      id: repository.id,
+    const response = await net.post("/api/repository/status/get", {
+      guid: repository.guid,
     });
     if (response.data.success) {
       this.setState({
-        history: response.data.history,
+        status: response.data.status,
       });
     } else {
       this.setState({
-        history: [],
+        status: { lastCommit: "", lastUpdate: "" },
       });
     }
   }
@@ -79,23 +70,18 @@ class StatusTab extends React.Component<IProps, IState> {
               <th scope="row">Last commit:</th>
               <td>
                 <span className="badge badge-secondary">
-                  #{this.props.repository.lastCommit}
+                  #{this.state.status.lastCommit}
                 </span>
               </td>
               <th scope="row">Last update:</th>
               <td>
                 <span className="badge badge-secondary">
-                  {this.props.repository.lastUpdate}
+                  {this.state.status.lastUpdate}
                 </span>
               </td>
             </tr>
           </tbody>
         </table>
-        <hr />
-        <h5 className="text-center mb-3">Repository history</h5>
-        {this.state.history.map((history) => (
-          <RepositoryHistory history={history} />
-        ))}
       </div>
     );
   }

@@ -46,7 +46,7 @@ class SettingsTab extends React.Component<IProps, IState> {
 
   async componentDidMount() {
     const { repository } = this.props;
-    const response = await net.post("/api/get/repository/settings", {
+    const response = await net.post("/api/repository/settings/get", {
       guid: repository.guid,
     });
     if (response.data.success) {
@@ -67,7 +67,7 @@ class SettingsTab extends React.Component<IProps, IState> {
   handleDeleteRepository = async () => {
     const { repository } = this.props;
     if (window.confirm("Are you sure you want to delete this repository?")) {
-      const response = await net.post("/api/delete/repository", {
+      const response = await net.post("/api/repository/delete", {
         guid: repository.guid,
       });
       if (response.data.success) {

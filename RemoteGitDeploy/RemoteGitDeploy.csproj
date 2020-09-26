@@ -33,10 +33,6 @@
     </Reference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\Internal\" />
-  </ItemGroup>
-
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="dotnet $(SolutionDir)LuaBuildEvents\LuaBuildEvents.dll $(ProjectDir)PreBuild.BuildEvents.lua $(ProjectDir)" />
   </Target>

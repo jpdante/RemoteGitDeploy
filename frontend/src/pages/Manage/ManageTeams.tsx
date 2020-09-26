@@ -29,16 +29,34 @@ class ManageTeams extends React.Component<IProps, IState> {
   }
 
   async componentWillMount() {
-    const response = await net.get("/api/get/teams");
-    if (response.data.success) {
-      this.setState({
-        teams: response.data.teams,
-      });
-    } else {
-      this.setState({
-        teams: [],
-      });
-    }
+    await net
+    .get("/api/teams/get")
+    .then((response) => {
+      if (response.data) {
+        if (response.data.error) {
+          this.setState({
+            teams: [],
+          });
+          return;
+        }
+        if (response.data.success) {
+          this.setState({
+            teams: response.data.teams,
+          });
+        }
+      }
+    })
+    .catch((reason) => {
+      if (
+        reason.response &&
+        reason.response.data &&
+        reason.response.data.error
+      ) {
+        this.setState({
+          teams: [],
+        });
+      }
+    });
   }
 
   render() {

@@ -7,7 +7,7 @@ interface ILog {
 }
 
 interface IProps {
-  log: ILog[];
+  log?: ILog[];
   insideCard: boolean;
   className?: string;
 }
@@ -61,7 +61,7 @@ class ConsoleLog extends React.Component<IProps, IState> {
         <div className={this.props.className}>
           <div className={styles.consoleHeader}>Console Output</div>
           <div className={`card-body ${styles.consoleBody}`}>
-            {this.props.log.map((log, index) => this.getLine(log, index))}
+            {this.props.log && this.props.log.map((log, index) => this.getLine(log, index))}
           </div>
         </div>
       );
@@ -72,7 +72,7 @@ class ConsoleLog extends React.Component<IProps, IState> {
           Console Output
         </div>
         <div className={`card-body ${styles.consoleBody}`}>
-          {this.props.log.map((log, index) => (
+          {this.props.log && this.props.log.map((log, index) => (
             <p key={index}>{log.data}</p>
           ))}
         </div>
