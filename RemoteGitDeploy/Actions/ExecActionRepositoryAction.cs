@@ -7,7 +7,6 @@ using HtcSharp.Core.Logging.Abstractions;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Loaders;
 using Newtonsoft.Json;
-using RemoteGitDeploy.Extensions;
 using RemoteGitDeploy.Manager;
 using RemoteGitDeploy.Models;
 using RemoteGitDeploy.Models.Internal;
@@ -28,7 +27,7 @@ namespace RemoteGitDeploy.Actions {
         public List<OutputLine> Output { get; }
 
         private Script _luaScript;
-        private bool _statusSet;
+        private int _exitCode;
         private Process _process;
         private string _directory;
         private string _filename;
@@ -56,38 +55,24 @@ namespace RemoteGitDeploy.Actions {
                 string luaIncludePath = Path.GetDirectoryName(_filename)?.Replace(@"\", "/");
                 ((ScriptLoaderBase)_luaScript.Options.ScriptLoader).ModulePaths = new[] { $"?.lua", $"{luaIncludePath}/?", $"{luaIncludePath}/?.lua", };
                 _luaScript.Options.DebugPrint = data => { Output.Add(new OutputLine(data, (DateTime.UtcNow - StartTime).Milliseconds)); };
-                Func<string, string, int> runProcess = (fileName, arguments) => {
+                Func<string, string, string, string, int> run = (fileName, arguments, workingDirectory, environmentVariables) => {
                     if (Finished) return -1;
                     var id = Guid.NewGuid().ToString();
                     var processStartInfo = new ProcessStartInfo {
                         FileName = fileName,
-                        Arguments = arguments,
-                        WorkingDirectory = _directory,
+                        Arguments = string.IsNullOrEmpty(arguments) ? "" : arguments,
+                        WorkingDirectory = string.IsNullOrEmpty(workingDirectory) ? _directory : workingDirectory,
                         RedirectStandardError = true,
                         RedirectStandardOutput = true,
+                        RedirectStandardInput = true,
                     };
-                    Output.Add(new OutputLine($"[{id}] Starting process: \"{fileName} {arguments}\"", (DateTime.UtcNow - StartTime).Milliseconds));
-                    _process = new Process { StartInfo = processStartInfo, };
-                    _process.OutputDataReceived += ProcessOnOutputDataReceived;
-                    _process.ErrorDataReceived += ProcessOnErrorDataReceived;
-                    _process.Start();
-                    _process.BeginOutputReadLine();
-                    _process.BeginErrorReadLine();
-                    _process.WaitForExit();
-                    Output.Add(new OutputLine($"[{id}] Process ended with code: {_process.ExitCode}", (DateTime.UtcNow - StartTime).Milliseconds));
-                    return _process.ExitCode;
-                };
-                Func<string, string, string, int> runProcessWorkingDirectory = (fileName, arguments, workingDirectory) => {
-                    if (Finished) return -1;
-                    var id = Guid.NewGuid().ToString();
-                    var processStartInfo = new ProcessStartInfo {
-                        FileName = fileName,
-                        Arguments = arguments,
-                        WorkingDirectory = workingDirectory,
-                        RedirectStandardError = true,
-                        RedirectStandardOutput = true,
-                    };
-                    Output.Add(new OutputLine($"[{id}] Starting process: \"{fileName} {arguments}\", Working on \"{workingDirectory}\"", (DateTime.UtcNow - StartTime).Milliseconds));
+                    if (!string.IsNullOrEmpty(environmentVariables)) {
+                        foreach (string variable in environmentVariables.Split(";")) {
+                            string[] varData = variable.Split("=", 2);
+                            if (varData.Length == 2) processStartInfo.EnvironmentVariables.Add(varData[0], varData[1]);
+                        }
+                    }
+                    Output.Add(new OutputLine($"[{id}] Starting process: \"{fileName}{(string.IsNullOrEmpty(arguments) ? "" : " " + arguments)}\"", (DateTime.UtcNow - StartTime).Milliseconds));
                     _process = new Process { StartInfo = processStartInfo, };
                     _process.OutputDataReceived += ProcessOnOutputDataReceived;
                     _process.ErrorDataReceived += ProcessOnErrorDataReceived;
@@ -99,37 +84,52 @@ namespace RemoteGitDeploy.Actions {
                     return _process.ExitCode;
                 };
                 Action<int> setStatus = (code) => {
-                    _statusSet = true;
-                    Success = code == 0;
+                    _exitCode = code;
                     Output.Add(new OutputLine($"Script status set with code: {code}", (DateTime.UtcNow - StartTime).Milliseconds));
                 };
-                _luaScript.Globals["run"] = runProcess;
-                _luaScript.Globals["runWD"] = runProcessWorkingDirectory;
+                _luaScript.Globals["run"] = run;
                 _luaScript.Globals["setStatus"] = setStatus;
-                _luaScript.Globals["branch"] = internalRepository.RepositoryInfo.Branch;
+                _luaScript.Globals["repoBranch"] = internalRepository.RepositoryInfo.Branch;
+                _luaScript.Globals["repoDirectory"] = _directory;
+                _luaScript.Globals["repoScriptFilename"] = _filename;
+                _luaScript.Globals["repoGit"] = internalRepository.RepositoryInfo.Git;
+                _luaScript.Globals["repoPersonalAccessToken"] = internalRepository.RepositoryInfo.PersonalAccessToken;
+                _luaScript.Globals["repoUsername"] = internalRepository.RepositoryInfo.Username;
+                _luaScript.Globals["repoGuid"] = internalRepository.RepositoryInfo.Guid;
                 _ = Task.Run(async () => {
-                    _luaScript.DoFile(_filename);
-                    Running = false;
-                    if (!_statusSet) Success = true;
-                    ExitTime = DateTime.UtcNow;
-                    await SaveActionToHistory();
-                    OnFinish?.Invoke(this);
+                    try {
+                        StartTime = DateTime.UtcNow;
+                        Running = true;
+                        _luaScript.DoFile(_filename);
+                        Running = false;
+                        if (_exitCode == 0) Success = true;
+                        ExitTime = DateTime.UtcNow;
+                        await SaveActionToHistory();
+                        OnFinish?.Invoke(this);
+                    } catch (ScriptRuntimeException ex) {
+                        Running = false;
+                        Success = false;
+                        ExitTime = DateTime.UtcNow;
+                        Output.Add(new OutputLine(ex.DecoratedMessage, (DateTime.UtcNow - StartTime).Milliseconds));
+                        HtcPlugin.Logger.LogError(ex);
+                        await SaveActionToHistory();
+                        OnFinish?.Invoke(this);
+                    } catch (Exception ex) {
+                        Running = false;
+                        Success = false;
+                        ExitTime = DateTime.UtcNow;
+                        Output.Add(new OutputLine(ex.Message, (DateTime.UtcNow - StartTime).Milliseconds));
+                        HtcPlugin.Logger.LogError(ex);
+                        await SaveActionToHistory();
+                        OnFinish?.Invoke(this);
+                    }
                 });
-                StartTime = DateTime.UtcNow;
-                Running = true;
                 return true;
-            } catch (ScriptRuntimeException ex) {
-                Running = false;
-                Success = false;
-                ExitTime = DateTime.UtcNow;
-                HtcPlugin.Logger.LogError(ex.DecoratedMessage, ex);
-                await SaveActionToHistory();
-                OnFinish?.Invoke(this);
-                return false;
             } catch (Exception ex) {
                 Running = false;
                 Success = false;
                 ExitTime = DateTime.UtcNow;
+                Output.Add(new OutputLine(ex.Message, (DateTime.UtcNow - StartTime).Milliseconds));
                 HtcPlugin.Logger.LogError(ex);
                 await SaveActionToHistory();
                 OnFinish?.Invoke(this);
@@ -172,8 +172,6 @@ namespace RemoteGitDeploy.Actions {
 
         private async Task SaveActionToHistory() {
             await using var context = new RgdContext();
-            int exitCode = 1;
-            if (_process != null) exitCode = _process.ExitCode;
             await context.ActionHistory.AddAsync(
                 new ActionHistory(
                     ActionGuid,
@@ -182,7 +180,7 @@ namespace RemoteGitDeploy.Actions {
                     "Execute repository lua script",
                     null,
                     JsonConvert.SerializeObject(Output),
-                    exitCode,
+                    _exitCode,
                     StartTime,
                     ExitTime)
             );
