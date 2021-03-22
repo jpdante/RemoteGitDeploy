@@ -8,7 +8,7 @@ namespace RemoteGitDeploy {
         public static readonly int Major = 1;
         public static readonly int Minor = 0;
         public static readonly int Patch = 0;
-        public static readonly int Build = 387;
+        public static readonly int Build = 388;
 
         public static string GetVersion() { return $"{Major}.{Minor}.{Patch} Build {Build}"; }
 
